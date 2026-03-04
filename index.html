@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elvis Veículos — Seminovos Premium</title>
+    <meta name="description" content="Encontre seu próximo veículo na Elvis Veículos. Seminovos selecionados com qualidade e procedência.">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+    /* ===== RESET & VARIÁVEIS ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --gold:       #c9a84c;
+        --gold-light: #e8c96a;
+        --gold-dim:   rgba(201,168,76,0.15);
+        --bg:         #0d0d0e;
+        --bg2:        #131315;
+        --bg3:        #1a1a1d;
+        --bg4:        #222226;
+        --border:     rgba(255,255,255,0.07);
+        --text:       #f0ece4;
+        --muted:      #6b6b72;
+        --white:      #ffffff;
+        --radius:     12px;
+        --radius-lg:  20px;
+        --shadow:     0 24px 64px rgba(0,0,0,0.6);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 400;
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    img { display: block; max-width: 100%; }
+    a  { color: inherit; text-decoration: none; }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+
+    /* ===== TIPOGRAFIA ===== */
+    .serif { font-family: 'Playfair Display', serif; }
+
+    /* ===== HEADER ===== */
+    header {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+        padding: 0 clamp(20px, 5vw, 80px);
+        height: 72px;
+        display: flex; align-items: center; justify-content: space-between;
+        background: rgba(13,13,14,0.85);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        transition: background 0.3s;
+    }
+
+    .logo {
+        display: flex; align-items: center; gap: 12px;
+        font-family: 'Playfair Display', serif;
+        font-size: 20px; font-weight: 900;
+        letter-spacing: 0.04em;
+        color: var(--white);
+    }
+
+    .logo-badge {
+        width: 36px; height: 36px;
+        background: var(--gold);
+        border-radius: 8px;
+        display: grid; place-items: center;
+        font-size: 18px; font-weight: 900;
+        color: #000;
+        font-family: 'Playfair Display', serif;
+    }
+
+    .logo-sub {
+        font-size: 10px; letter-spacing: 0.2em;
+        color: var(--gold); font-family: 'DM Sans', sans-serif;
+        font-weight: 500; text-transform: uppercase;
+        display: block; margin-top: -4px;
+    }
+
+    .header-cta {
+        background: var(--gold);
+        color: #000;
+        border: none; border-radius: 8px;
+        padding: 10px 22px;
+        font-size: 13px; font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .header-cta:hover { background: var(--gold-light); transform: translateY(-1px); }
+
+    /* ===== HERO ===== */
+    #hero {
+        min-height: 100vh;
+        display: flex; flex-direction: column; justify-content: flex-end;
+        padding: 140px clamp(20px, 5vw, 80px) clamp(40px, 6vw, 80px);
+        position: relative; overflow: hidden;
+    }
+
+    .hero-bg {
+        position: absolute; inset: 0;
+        background: var(--bg2);
+        overflow: hidden;
+    }
+
+    .hero-bg img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        opacity: 0.45;
+        transition: opacity 0.8s;
+    }
+
+    .hero-bg::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(
+            to top,
+            var(--bg) 0%,
+            rgba(13,13,14,0.6) 50%,
+            rgba(13,13,14,0.2) 100%
+        );
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 700px; }
+
+    .hero-tag {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--gold-dim);
+        border: 1px solid rgba(201,168,76,0.3);
+        border-radius: 100px;
+        padding: 6px 16px;
+        font-size: 12px; font-weight: 600;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--gold);
+        margin-bottom: 20px;
+        opacity: 0; animation: fadeUp 0.6s 0.2s forwards;
+    }
+
+    .hero-tag::before {
+        content: ''; width: 6px; height: 6px;
+        background: var(--gold); border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%,100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    .hero-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(38px, 6vw, 80px);
+        font-weight: 900; line-height: 1.05;
+        color: var(--white);
+        margin-bottom: 16px;
+        opacity: 0; animation: fadeUp 0.7s 0.35s forwards;
+    }
+
+    .hero-title em {
+        font-style: italic; color: var(--gold);
+    }
+
+    .hero-sub {
+        font-size: clamp(15px, 1.5vw, 18px);
+        color: rgba(240,236,228,0.65);
+        font-weight: 300; max-width: 480px;
+        margin-bottom: 36px;
+        opacity: 0; animation: fadeUp 0.7s 0.5s forwards;
+    }
+
+    .hero-actions {
+        display: flex; gap: 14px; flex-wrap: wrap;
+        opacity: 0; animation: fadeUp 0.7s 0.65s forwards;
+    }
+
+    .btn-primary {
+        background: var(--gold); color: #000;
+        border: none; border-radius: 10px;
+        padding: 14px 32px;
+        font-size: 14px; font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.25s;
+    }
+    .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(201,168,76,0.35); }
+
+    .btn-ghost {
+        background: transparent; color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px; padding: 14px 32px;
+        font-size: 14px; font-weight: 500;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer; transition: all 0.25s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.05); }
+
+    .hero-stats {
+        position: absolute; bottom: clamp(40px,6vw,80px); right: clamp(20px,5vw,80px);
+        display: flex; gap: 2px;
+        z-index: 2;
+        opacity: 0; animation: fadeUp 0.7s 0.8s forwards;
+    }
+
+    .hero-stat {
+        background: rgba(13,13,14,0.8);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 24px; text-align: center;
+        min-width: 100px;
+    }
+    .hero-stat:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .hero-stat:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+
+    .hero-stat-value {
+        font-family: 'Playfair Display', serif;
+        font-size: 26px; font-weight: 700;
+        color: var(--gold); line-height: 1;
+    }
+
+    .hero-stat-label {
+        font-size: 11px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.1em;
+        margin-top: 4px;
+    }
+
+    /* ===== SECTION ===== */
+    section { padding: clamp(60px, 8vw, 100px) clamp(20px, 5vw, 80px); }
+
+    .section-header {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        gap: 20px; flex-wrap: wrap; margin-bottom: 40px;
+    }
+
+    .section-label {
+        font-size: 11px; font-weight: 600; letter-spacing: 0.2em;
+        text-transform: uppercase; color: var(--gold);
+        margin-bottom: 8px;
+    }
+
+    .section-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(26px, 3.5vw, 44px);
+        font-weight: 700; color: var(--white);
+        line-height: 1.15;
+    }
+
+    /* ===== DESTAQUE ===== */
+    #destaque { background: var(--bg2); }
+
+    .destaque-card {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        min-height: 500px;
+    }
+
+    .destaque-gallery {
+        position: relative; background: var(--bg4);
+        overflow: hidden; min-height: 400px;
+    }
+
+    .destaque-gallery img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .destaque-gallery:hover img { transform: scale(1.04); }
+
+    .gallery-thumbs {
+        position: absolute; bottom: 16px; left: 16px;
+        display: flex; gap: 8px;
+    }
+
+    .gallery-thumb {
+        width: 56px; height: 40px;
+        border-radius: 6px; overflow: hidden;
+        border: 2px solid transparent;
+        cursor: pointer; transition: border-color 0.2s;
+        flex-shrink: 0;
+    }
+    .gallery-thumb.active { border-color: var(--gold); }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .destaque-info {
+        padding: clamp(30px, 4vw, 56px);
+        display: flex; flex-direction: column; justify-content: center;
+        gap: 0;
+    }
+
+    .destaque-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.3);
+        border-radius: 100px; padding: 5px 14px;
+        font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--gold);
+        margin-bottom: 20px; width: fit-content;
+    }
+
+    .destaque-name {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(24px, 3vw, 38px);
+        font-weight: 700; color: var(--white);
+        line-height: 1.1; margin-bottom: 6px;
+    }
+
+    .destaque-version {
+        font-size: 14px; color: var(--muted); margin-bottom: 28px;
+    }
+
+    .destaque-specs {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 12px; margin-bottom: 32px;
+    }
+
+    .spec-item {
+        background: var(--bg4); border-radius: 10px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+    }
+    .spec-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .spec-value { font-size: 15px; font-weight: 600; color: var(--white); margin-top: 2px; }
+
+    .destaque-price-row {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+    }
+
+    .destaque-price {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(28px, 3vw, 40px);
+        font-weight: 700; color: var(--gold);
+    }
+
+    .destaque-price small {
+        font-size: 14px; color: var(--muted);
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 400; display: block;
+        text-decoration: line-through;
+    }
+
+    /* ===== FILTROS ===== */
+    #estoque { background: var(--bg); }
+
+    .filters-bar {
+        display: flex; gap: 10px; flex-wrap: wrap;
+        margin-bottom: 32px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 20px;
+    }
+
+    .filter-select, .filter-input {
+        background: var(--bg4); color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px;
+        font-size: 13px; font-family: 'DM Sans', sans-serif;
+        appearance: none; cursor: pointer;
+        transition: border-color 0.2s;
+        min-width: 130px; flex: 1;
+    }
+    .filter-select:focus, .filter-input:focus {
+        outline: none; border-color: var(--gold);
+    }
+
+    .filter-input { max-width: 220px; }
+
+    .filter-btn-reset {
+        background: transparent; color: var(--muted);
+        border: 1px solid var(--border); border-radius: 8px;
+        padding: 10px 16px; font-size: 13px;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .filter-btn-reset:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* ===== GRID DE VEÍCULOS ===== */
+    .vehicles-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .vehicle-card {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        animation: fadeUp 0.5s both;
+    }
+    .vehicle-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(201,168,76,0.3);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    .card-image {
+        position: relative; height: 200px;
+        background: var(--bg4); overflow: hidden;
+    }
+    .card-image img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.5s;
+    }
+    .vehicle-card:hover .card-image img { transform: scale(1.07); }
+
+    .card-image-placeholder {
+        width: 100%; height: 100%;
+        display: grid; place-items: center;
+        color: var(--muted); font-size: 48px;
+    }
+
+    .card-badge-destaque {
+        position: absolute; top: 12px; left: 12px;
+        background: var(--gold); color: #000;
+        border-radius: 6px; padding: 3px 10px;
+        font-size: 10px; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+    }
+
+    .card-photo-count {
+        position: absolute; bottom: 10px; right: 10px;
+        background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+        border-radius: 6px; padding: 3px 10px;
+        font-size: 11px; color: rgba(255,255,255,0.8);
+    }
+
+    .card-body { padding: 20px; }
+
+    .card-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 18px; font-weight: 700;
+        color: var(--white); line-height: 1.2;
+        margin-bottom: 4px;
+    }
+
+    .card-version {
+        font-size: 12px; color: var(--muted); margin-bottom: 14px;
+    }
+
+    .card-specs {
+        display: flex; gap: 16px; flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .card-spec {
+        font-size: 12px; color: var(--muted);
+        display: flex; align-items: center; gap: 4px;
+    }
+    .card-spec strong { color: rgba(240,236,228,0.75); font-weight: 500; }
+
+    .card-footer {
+        display: flex; align-items: center; justify-content: space-between;
+        border-top: 1px solid var(--border); padding-top: 16px;
+    }
+
+    .card-price {
+        font-family: 'Playfair Display', serif;
+        font-size: 22px; font-weight: 700; color: var(--gold);
+    }
+
+    .card-cta {
+        background: var(--gold-dim);
+        color: var(--gold);
+        border: 1px solid rgba(201,168,76,0.25);
+        border-radius: 8px; padding: 8px 16px;
+        font-size: 12px; font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        letter-spacing: 0.06em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .card-cta:hover { background: var(--gold); color: #000; }
+
+    /* ===== EMPTY / LOADING ===== */
+    .state-empty {
+        grid-column: 1/-1; text-align: center;
+        padding: 80px 20px; color: var(--muted);
+    }
+    .state-empty-icon { font-size: 52px; margin-bottom: 16px; }
+    .state-empty p { font-size: 16px; }
+
+    .skeleton {
+        background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+        border-radius: 8px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+        position: fixed; inset: 0; z-index: 1000;
+        background: rgba(0,0,0,0.92);
+        backdrop-filter: blur(14px);
+        display: flex; align-items: flex-end; justify-content: center;
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.35s, visibility 0.35s;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+
+    .modal {
+        background: var(--bg2);
+        border: 1px solid rgba(201,168,76,0.15);
+        border-bottom: none;
+        border-radius: 24px 24px 0 0;
+        width: 100%; max-width: 980px;
+        max-height: 94vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        transform: translateY(40px);
+        transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+        -webkit-overflow-scrolling: touch;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    /* Drag handle */
+    .modal-drag-handle {
+        width: 44px; height: 5px; border-radius: 100px;
+        background: rgba(255,255,255,0.18);
+        margin: 14px auto 0;
+    }
+
+    .modal-close {
+        position: absolute; top: 16px; right: 16px;
+        width: 38px; height: 38px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 50%; cursor: pointer;
+        display: grid; place-items: center;
+        font-size: 15px; color: var(--muted);
+        transition: all 0.2s; z-index: 10;
+        backdrop-filter: blur(8px);
+    }
+    .modal-close:hover { color: var(--white); background: rgba(255,255,255,0.15); }
+
+    .modal-inner { position: relative; }
+
+    /* Galeria */
+    .modal-gallery {
+        position: relative;
+        height: clamp(260px, 44vh, 460px);
+        background: var(--bg4); overflow: hidden;
+        touch-action: pan-y;
+        user-select: none;
+    }
+
+    .modal-gallery-main {
+        width: 100%; height: 100%;
+        position: relative;
+    }
+    .modal-gallery-main img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: opacity 0.25s;
+    }
+
+    /* Overlay gradiente na galeria */
+    .modal-gallery::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 45%);
+        pointer-events: none; z-index: 1;
+    }
+
+    /* Contador flutuante */
+    .gallery-counter {
+        position: absolute; top: 14px; left: 14px; z-index: 5;
+        background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 100px; padding: 4px 12px;
+        font-size: 11px; color: rgba(255,255,255,0.85); letter-spacing: 0.5px;
+    }
+
+    .gallery-nav {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        width: 46px; height: 46px;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 50%; cursor: pointer;
+        display: grid; place-items: center;
+        font-size: 20px; color: var(--white);
+        transition: all 0.2s; z-index: 5;
+    }
+    .gallery-nav:hover { background: var(--gold); color: #000; border-color: var(--gold); }
+    .gallery-nav:active { transform: translateY(-50%) scale(0.93); }
+    .gallery-nav.prev { left: 14px; }
+    .gallery-nav.next { right: 14px; }
+
+    /* Dots indicadores */
+    .gallery-dots {
+        position: absolute; bottom: 14px; left: 50%;
+        transform: translateX(-50%);
+        display: flex; gap: 6px; z-index: 5;
+    }
+    .gallery-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: rgba(255,255,255,0.35);
+        transition: all 0.25s; cursor: pointer;
+    }
+    .gallery-dot.active {
+        background: var(--gold);
+        width: 20px; border-radius: 3px;
+    }
+
+    /* Thumbs strip — apenas desktop */
+    .modal-gallery-thumbs {
+        display: flex; gap: 8px; padding: 12px 20px;
+        overflow-x: auto; background: var(--bg4);
+        border-bottom: 1px solid var(--border);
+        scrollbar-width: none;
+    }
+    .modal-gallery-thumbs::-webkit-scrollbar { display: none; }
+    .modal-thumb {
+        width: 64px; height: 46px; border-radius: 6px; overflow: hidden;
+        border: 2px solid transparent; cursor: pointer;
+        transition: border-color 0.2s, opacity 0.2s;
+        flex-shrink: 0; opacity: 0.6;
+    }
+    .modal-thumb:hover { opacity: 1; }
+    .modal-thumb.active { border-color: var(--gold); opacity: 1; }
+    .modal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .modal-body { padding: clamp(20px, 4vw, 44px); }
+
+    /* Header preço + título */
+    .modal-header-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px 20px;
+        align-items: start;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+    }
+    .modal-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(22px, 3.5vw, 32px);
+        font-weight: 700; color: var(--white); line-height: 1.1;
+    }
+    .modal-version {
+        font-size: 13px; color: var(--muted); margin-top: 5px;
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .modal-version-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+    .modal-price-block { text-align: right; }
+    .modal-price {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(24px, 3.5vw, 34px);
+        font-weight: 700; color: var(--gold);
+        white-space: nowrap; line-height: 1;
+    }
+    .modal-fipe-price {
+        font-size: 11px; color: var(--muted);
+        text-decoration: line-through; margin-bottom: 2px;
+    }
+    .modal-price-savings {
+        font-size: 11px; color: #4ade80; margin-top: 3px;
+        font-weight: 600;
+    }
+
+    /* CTAs rápidos mobile */
+    .modal-quick-cta {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 10px; margin-bottom: 24px;
+    }
+    .modal-cta-wpp {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: #25d366; color: #fff;
+        border: none; border-radius: 10px; padding: 14px;
+        font-size: 14px; font-weight: 700;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .modal-cta-wpp:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .modal-cta-form {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: var(--gold-dim); color: var(--gold);
+        border: 1px solid rgba(201,168,76,0.3); border-radius: 10px; padding: 14px;
+        font-size: 14px; font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .modal-cta-form:hover { background: rgba(201,168,76,0.2); }
+
+    /* Specs grid */
+    .modal-specs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px; margin-bottom: 24px;
+    }
+    .modal-spec {
+        background: var(--bg3); border: 1px solid var(--border);
+        border-radius: 10px; padding: 13px 15px;
+        transition: border-color 0.2s;
+    }
+    .modal-spec:hover { border-color: rgba(201,168,76,0.25); }
+    .modal-spec-label {
+        font-size: 9px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.12em;
+    }
+    .modal-spec-value {
+        font-size: 14px; font-weight: 600; color: var(--white); margin-top: 4px;
+    }
+
+    /* Descrição */
+    .modal-desc {
+        font-size: 14px; color: rgba(240,236,228,0.65);
+        line-height: 1.75; margin-bottom: 24px;
+        padding: 18px 20px; background: var(--bg3);
+        border-radius: var(--radius); border: 1px solid var(--border);
+        border-left: 3px solid rgba(201,168,76,0.4);
+    }
+
+    /* Opcionais */
+    .modal-optionals { margin-bottom: 28px; }
+    .optionals-title {
+        font-size: 11px; font-weight: 600; color: var(--muted);
+        letter-spacing: 0.12em; text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .optionals-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .optional-tag {
+        background: var(--bg3); border: 1px solid var(--border);
+        border-radius: 100px; padding: 5px 13px;
+        font-size: 11px; color: rgba(240,236,228,0.7);
+        transition: all 0.2s;
+    }
+    .optional-tag:hover {
+        border-color: rgba(201,168,76,0.3);
+        color: var(--gold);
+    }
+
+    /* Sticky CTA bar no mobile */
+    .modal-sticky-cta {
+        display: none;
+        position: sticky; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(to top, var(--bg2) 70%, transparent);
+        padding: 16px 20px 20px;
+        z-index: 20;
+    }
+
+    /* ===== FORMULÁRIO DE CONTATO ===== */
+    .contact-form {
+        background: var(--bg3);
+        border: 1px solid rgba(201,168,76,0.12);
+        border-radius: 20px;
+        padding: clamp(22px, 4vw, 36px);
+        position: relative; overflow: hidden;
+    }
+    .contact-form::before {
+        content: '';
+        position: absolute; top: -60px; right: -60px;
+        width: 180px; height: 180px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(201,168,76,0.07), transparent 70%);
+        pointer-events: none;
+    }
+    .contact-form-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 20px; font-weight: 700; color: var(--white);
+        margin-bottom: 4px;
+    }
+    .contact-form-sub {
+        font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.5;
+    }
+    .form-field {
+        position: relative; margin-bottom: 14px;
+    }
+    .form-field label {
+        position: absolute; left: 14px; top: 13px;
+        font-size: 13px; color: var(--muted);
+        transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+        pointer-events: none; z-index: 1;
+        padding: 0 3px; background: transparent;
+    }
+    .form-field.has-value label,
+    .form-field:focus-within label {
+        top: -8px; left: 10px;
+        font-size: 10px; letter-spacing: 0.08em;
+        color: var(--gold); background: var(--bg3);
+        text-transform: uppercase;
+    }
+    .form-field input,
+    .form-field textarea {
+        width: 100%;
+        background: var(--bg4); color: var(--text);
+        border: 1.5px solid rgba(255,255,255,0.09);
+        border-radius: 10px;
+        padding: 14px 14px 10px;
+        font-size: 14px; font-family: 'DM Sans', sans-serif;
+        transition: border-color 0.25s, box-shadow 0.25s, background 0.2s;
+        outline: none; -webkit-appearance: none;
+    }
+    .form-field textarea {
+        resize: none; min-height: 96px;
+        padding-top: 20px; line-height: 1.5;
+    }
+    .form-field input:focus,
+    .form-field textarea:focus {
+        border-color: var(--gold);
+        background: rgba(201,168,76,0.03);
+        box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+    }
+    .form-field input.error,
+    .form-field textarea.error {
+        border-color: #e55;
+        box-shadow: 0 0 0 3px rgba(224,85,85,0.1);
+    }
+    .form-field .field-error {
+        font-size: 11px; color: #e77; margin-top: 4px; padding-left: 4px;
+        display: none; animation: fadeUp 0.2s ease;
+    }
+    .form-field.show-error .field-error { display: block; }
+    .form-field .field-icon {
+        position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+        font-size: 15px; pointer-events: none; opacity: 0.35;
+    }
+    .form-field.has-icon input { padding-right: 40px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-divider {
+        display: flex; align-items: center; gap: 12px;
+        margin: 14px 0; color: var(--muted); font-size: 11px; letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .form-divider::before, .form-divider::after {
+        content: ''; flex: 1; height: 1px;
+        background: rgba(255,255,255,0.07);
+    }
+    .btn-wpp-alt {
+        width: 100%; display: flex; align-items: center; justify-content: center;
+        gap: 10px;
+        background: rgba(37,211,102,0.1);
+        border: 1.5px solid rgba(37,211,102,0.28);
+        color: #25d366; border-radius: 10px;
+        padding: 13px; font-size: 14px; font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer; text-decoration: none; transition: all 0.25s;
+        letter-spacing: 0.02em;
+    }
+    .btn-wpp-alt:hover { background: rgba(37,211,102,0.18); transform: translateY(-1px); }
+    .form-submit {
+        width: 100%; background: var(--gold); color: #000;
+        border: none; border-radius: 10px; padding: 15px;
+        font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif;
+        letter-spacing: 0.06em; text-transform: uppercase;
+        cursor: pointer; transition: all 0.25s;
+        position: relative; overflow: hidden; margin-top: 4px;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .form-submit:hover { background: var(--gold-light); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,168,76,0.35); }
+    .form-submit:active { transform: translateY(0); }
+    .form-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-spinner {
+        width: 16px; height: 16px;
+        border: 2px solid rgba(0,0,0,0.25); border-top-color: #000;
+        border-radius: 50%; animation: spin 0.7s linear infinite;
+        display: none; flex-shrink: 0;
+    }
+    .form-submit.loading .btn-spinner { display: block; }
+    .form-submit.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .form-success {
+        text-align: center; padding: 36px 20px; display: none;
+    }
+    .form-success.show { display: block; animation: fadeUp 0.4s ease; }
+    .form-success-icon { font-size: 48px; margin-bottom: 14px; display: block; }
+    .form-success h3 {
+        font-family: 'Playfair Display', serif;
+        font-size: 22px; color: var(--white); margin-bottom: 8px;
+    }
+    .form-success p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .success-action {
+        display: inline-flex; align-items: center; gap: 8px;
+        margin-top: 20px; background: #25d366; color: #fff;
+        padding: 12px 24px; border-radius: 10px;
+        font-size: 14px; font-weight: 600;
+        text-decoration: none; transition: all 0.2s;
+    }
+    .success-action:hover { filter: brightness(1.1); }
+
+    /* ===== SEÇÃO DE CONTATO ===== */
+    #contato { background: var(--bg2); }
+
+    .contato-grid {
+        display: grid; grid-template-columns: 1fr 1.2fr;
+        gap: 60px; align-items: start;
+    }
+
+    .contato-info h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(28px, 3.5vw, 44px);
+        font-weight: 700; color: var(--white);
+        line-height: 1.15; margin-bottom: 16px;
+    }
+
+    .contato-info p {
+        font-size: 15px; color: rgba(240,236,228,0.6);
+        line-height: 1.7; margin-bottom: 36px;
+    }
+
+    .contato-items { display: flex; flex-direction: column; gap: 16px; }
+
+    .contato-item {
+        display: flex; align-items: center; gap: 14px;
+        background: var(--bg3); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 16px 20px;
+    }
+    .contato-item-icon {
+        width: 42px; height: 42px; flex-shrink: 0;
+        background: var(--gold-dim); border-radius: 10px;
+        display: grid; place-items: center; font-size: 20px;
+    }
+    .contato-item-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .contato-item-value { font-size: 15px; font-weight: 500; color: var(--white); margin-top: 2px; }
+
+    /* ===== FOOTER ===== */
+    footer {
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+        padding: 40px clamp(20px, 5vw, 80px);
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 20px; flex-wrap: wrap;
+    }
+
+    .footer-copy { font-size: 13px; color: var(--muted); }
+    .footer-copy a { color: var(--gold); }
+
+    /* ===== WHATSAPP FLOAT ===== */
+    .whatsapp-float {
+        position: fixed; bottom: 28px; right: 28px; z-index: 800;
+        width: 58px; height: 58px;
+        background: #25d366; border-radius: 50%;
+        display: grid; place-items: center;
+        box-shadow: 0 8px 28px rgba(37,211,102,0.4);
+        font-size: 28px; transition: all 0.25s;
+        animation: fadeUp 1s 1.2s both;
+    }
+    .whatsapp-float:hover { transform: scale(1.1); box-shadow: 0 12px 36px rgba(37,211,102,0.55); }
+
+    /* ===== ANIMAÇÕES ===== */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== TOAST ===== */
+    .toast {
+        position: fixed; bottom: 100px; right: 28px; z-index: 2000;
+        background: var(--bg3); border: 1px solid var(--border);
+        border-radius: 12px; padding: 14px 18px;
+        display: flex; align-items: center; gap: 12px;
+        box-shadow: var(--shadow);
+        transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        max-width: 320px;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast-icon { font-size: 22px; }
+    .toast-text { font-size: 14px; font-weight: 500; color: var(--white); }
+    .toast-sub  { font-size: 12px; color: var(--muted); }
+
+    /* ===== RESPONSIVO ===== */
+    @media (max-width: 900px) {
+        .destaque-card { grid-template-columns: 1fr; }
+        .destaque-gallery { min-height: 280px; }
+        .contato-grid { grid-template-columns: 1fr; gap: 40px; }
+        .hero-stats { position: static; margin-top: 40px; flex-wrap: wrap; }
+        .hero-stat:first-child, .hero-stat:last-child { border-radius: var(--radius); }
+        .hero-stat { flex: 1; min-width: 80px; }
+    }
+
+    @media (max-width: 600px) {
+        .form-row { grid-template-columns: 1fr; }
+        .destaque-specs { grid-template-columns: 1fr 1fr; }
+        .modal-specs-grid { grid-template-columns: 1fr 1fr; }
+        .vehicles-grid { grid-template-columns: 1fr; }
+    }
+    /* ===== MODAL + FORM RESPONSIVO ===== */
+    @media (min-width: 700px) {
+        .modal-overlay { align-items: center; padding: 20px; }
+        .modal {
+            border-radius: var(--radius-lg);
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+            max-height: 90vh;
+        }
+        .modal-drag-handle { display: none; }
+        .modal-sticky-cta { display: none !important; }
+    }
+    @media (max-width: 699px) {
+        .modal { max-height: 96vh; }
+        .modal-gallery-thumbs { display: none; }
+        .modal-header-row { grid-template-columns: 1fr; gap: 8px; }
+        .modal-price-block { text-align: left; }
+        .modal-specs-grid { grid-template-columns: 1fr 1fr; }
+        .modal-sticky-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-row { grid-template-columns: 1fr; }
+        .modal-quick-cta { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+        .modal-specs-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+        .modal-spec { padding: 11px 12px; }
+        .modal-spec-value { font-size: 13px; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="logo">
+        <div class="logo-badge">E</div>
+        <div>
+            ELVIS VEÍCULOS
+            <span class="logo-sub">Seminovos Premium</span>
+        </div>
+    </div>
+    <button class="header-cta" onclick="scrollTo('#estoque')">Ver Estoque</button>
+</header>
+
+<!-- HERO -->
+<section id="hero">
+    <div class="hero-bg" id="hero-bg">
+        <img id="hero-img" src="" alt="Veículo em destaque">
+    </div>
+
+    <div class="hero-content">
+        <div class="hero-tag">✦ Em Destaque</div>
+        <h1 class="hero-title" id="hero-title">
+            Encontre seu<br><em>próximo veículo</em>
+        </h1>
+        <p class="hero-sub" id="hero-sub">Seminovos selecionados com qualidade, procedência e o melhor preço.</p>
+        <div class="hero-actions">
+            <button class="btn-primary" onclick="scrollTo('#destaque')">Ver Destaque</button>
+            <button class="btn-ghost" onclick="scrollTo('#contato')">Falar com Consultor</button>
+        </div>
+    </div>
+
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="hero-stat-value" id="stat-estoque">—</div>
+            <div class="hero-stat-label">No Estoque</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value" id="stat-marcas">—</div>
+            <div class="hero-stat-label">Marcas</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value" id="stat-anos">—</div>
+            <div class="hero-stat-label">Anos disp.</div>
+        </div>
+    </div>
+</section>
+
+<!-- DESTAQUE -->
+<section id="destaque">
+    <div class="section-header">
+        <div>
+            <div class="section-label">Escolha da Semana</div>
+            <h2 class="section-title serif">Veículo em <em style="font-style:italic;color:var(--gold)">Destaque</em></h2>
+        </div>
+    </div>
+
+    <div class="destaque-card" id="destaque-card">
+        <!-- preenchido por JS -->
+        <div class="destaque-gallery">
+            <div class="card-image-placeholder">🚗</div>
+        </div>
+        <div class="destaque-info">
+            <div style="height:20px;width:120px;" class="skeleton"></div>
+            <div style="height:36px;width:80%;margin:16px 0 8px;" class="skeleton"></div>
+            <div style="height:14px;width:60%;margin-bottom:28px;" class="skeleton"></div>
+            <div class="destaque-specs">
+                <div style="height:72px;" class="skeleton"></div>
+                <div style="height:72px;" class="skeleton"></div>
+                <div style="height:72px;" class="skeleton"></div>
+                <div style="height:72px;" class="skeleton"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ESTOQUE -->
+<section id="estoque">
+    <div class="section-header">
+        <div>
+            <div class="section-label">Estoque Completo</div>
+            <h2 class="section-title serif">Todos os <em style="font-style:italic;color:var(--gold)">Veículos</em></h2>
+        </div>
+        <span style="font-size:13px;color:var(--muted)" id="vehicles-count"></span>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar">
+        <input type="text" class="filter-input" id="f-busca" placeholder="🔍  Buscar marca ou modelo...">
+        <select class="filter-select" id="f-marca">
+            <option value="">Todas as marcas</option>
+        </select>
+        <select class="filter-select" id="f-cambio">
+            <option value="">Câmbio</option>
+            <option value="Automático">Automático</option>
+            <option value="Manual">Manual</option>
+            <option value="CVT">CVT</option>
+        </select>
+        <select class="filter-select" id="f-combustivel">
+            <option value="">Combustível</option>
+            <option value="Flex">Flex</option>
+            <option value="Gasolina">Gasolina</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Elétrico">Elétrico</option>
+            <option value="Híbrido">Híbrido</option>
+        </select>
+        <select class="filter-select" id="f-preco">
+            <option value="">Faixa de preço</option>
+            <option value="0-50000">Até R$ 50.000</option>
+            <option value="50000-80000">R$ 50k — 80k</option>
+            <option value="80000-120000">R$ 80k — 120k</option>
+            <option value="120000-999999">Acima de R$ 120k</option>
+        </select>
+        <button class="filter-btn-reset" id="btn-reset">✕ Limpar</button>
+    </div>
+
+    <div class="vehicles-grid" id="vehicles-grid">
+        <!-- skeletons -->
+        <div class="vehicle-card"><div style="height:200px;" class="skeleton"></div><div class="card-body"><div style="height:20px;margin-bottom:8px;" class="skeleton"></div><div style="height:14px;width:60%;margin-bottom:16px;" class="skeleton"></div><div style="height:40px;" class="skeleton"></div></div></div>
+        <div class="vehicle-card"><div style="height:200px;" class="skeleton"></div><div class="card-body"><div style="height:20px;margin-bottom:8px;" class="skeleton"></div><div style="height:14px;width:60%;margin-bottom:16px;" class="skeleton"></div><div style="height:40px;" class="skeleton"></div></div></div>
+        <div class="vehicle-card"><div style="height:200px;" class="skeleton"></div><div class="card-body"><div style="height:20px;margin-bottom:8px;" class="skeleton"></div><div style="height:14px;width:60%;margin-bottom:16px;" class="skeleton"></div><div style="height:40px;" class="skeleton"></div></div></div>
+    </div>
+</section>
+
+<!-- CONTATO -->
+<section id="contato">
+    <div class="contato-grid">
+        <div class="contato-info">
+            <div class="section-label">Fale Conosco</div>
+            <h2>Seu próximo veículo <em style="font-style:italic;color:var(--gold)">está aqui</em></h2>
+            <p>Nossa equipe está pronta para te ajudar a encontrar o veículo ideal. Entre em contato e receba uma proposta personalizada.</p>
+
+            <div class="contato-items">
+                <div class="contato-item">
+                    <div class="contato-item-icon">📱</div>
+                    <div>
+                        <div class="contato-item-label">WhatsApp</div>
+                        <div class="contato-item-value" id="contato-whatsapp">(00) 00000-0000</div>
+                    </div>
+                </div>
+                <div class="contato-item">
+                    <div class="contato-item-icon">📍</div>
+                    <div>
+                        <div class="contato-item-label">Endereço</div>
+                        <div class="contato-item-value">Visite nossa loja</div>
+                    </div>
+                </div>
+                <div class="contato-item">
+                    <div class="contato-item-icon">🕐</div>
+                    <div>
+                        <div class="contato-item-label">Horário</div>
+                        <div class="contato-item-value">Seg–Sáb: 8h às 18h</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="contact-form" id="contact-form-general">
+                <div class="contact-form-title">Envie uma mensagem</div>
+                <div class="contact-form-sub">Resposta rápida — geralmente em menos de 1h em dias úteis.</div>
+
+                <div class="form-success" id="form-success">
+                    <span class="form-success-icon">🎉</span>
+                    <h3>Mensagem enviada!</h3>
+                    <p>Em breve nossa equipe entrará em contato com você.</p>
+                    <a class="success-action" id="general-success-wpp" href="#">💬 Falar agora no WhatsApp</a>
+                </div>
+
+                <div id="general-form-fields">
+                    <div class="form-row">
+                        <div class="form-field has-icon" id="ff-c-nome">
+                            <label for="c-nome">Nome completo *</label>
+                            <input type="text" id="c-nome" autocomplete="name">
+                            <span class="field-icon">👤</span>
+                            <div class="field-error">Informe seu nome</div>
+                        </div>
+                        <div class="form-field has-icon" id="ff-c-telefone">
+                            <label for="c-telefone">WhatsApp / Telefone *</label>
+                            <input type="tel" id="c-telefone" autocomplete="tel" inputmode="numeric" maxlength="15">
+                            <span class="field-icon">📱</span>
+                            <div class="field-error">Informe um telefone válido</div>
+                        </div>
+                    </div>
+                    <div class="form-field" id="ff-c-email">
+                        <label for="c-email">E-mail</label>
+                        <input type="email" id="c-email" autocomplete="email" inputmode="email">
+                        <div class="field-error">E-mail inválido</div>
+                    </div>
+                    <div class="form-field" id="ff-c-cidade">
+                        <label for="c-cidade">Cidade</label>
+                        <input type="text" id="c-cidade" autocomplete="address-level2">
+                    </div>
+                    <div class="form-field" id="ff-c-mensagem">
+                        <label for="c-mensagem">Mensagem</label>
+                        <textarea id="c-mensagem"></textarea>
+                    </div>
+                    <button class="form-submit" id="btn-enviar">
+                        <span class="btn-spinner"></span>
+                        <span class="btn-text">Enviar Mensagem →</span>
+                    </button>
+                    <div class="form-divider">ou</div>
+                    <a class="btn-wpp-alt" id="general-wpp-alt" href="#" target="_blank">💬 Enviar direto pelo WhatsApp</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="logo" style="font-size:16px;">
+        <div class="logo-badge" style="width:30px;height:30px;font-size:15px;">E</div>
+        Elvis Veículos
+    </div>
+    <div class="footer-copy">
+        © 2025 Elvis Veículos — Todos os direitos reservados
+    </div>
+</footer>
+
+<!-- WHATSAPP FLUTUANTE -->
+<a href="https://wa.me/5516993117529" target="_blank" class="whatsapp-float" id="whatsapp-link" title="Falar no WhatsApp">💬</a>
+
+<!-- MODAL VEÍCULO -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-vehicle-title">
+        <div class="modal-drag-handle"></div>
+        <div class="modal-inner">
+            <button class="modal-close" id="modal-close" aria-label="Fechar">✕</button>
+
+            <div class="modal-gallery" id="modal-gallery">
+                <div class="modal-gallery-main" id="modal-gallery-main">
+                    <div class="card-image-placeholder" style="height:100%;background:var(--bg4);">🚗</div>
+                </div>
+                <div class="gallery-counter" id="gallery-counter" style="display:none">1 / 1</div>
+                <button class="gallery-nav prev" id="gallery-prev" style="display:none">‹</button>
+                <button class="gallery-nav next" id="gallery-next" style="display:none">›</button>
+                <div class="gallery-dots" id="gallery-dots"></div>
+            </div>
+            <div class="modal-gallery-thumbs" id="modal-gallery-thumbs"></div>
+
+            <div class="modal-body">
+                <div class="modal-header-row">
+                    <div>
+                        <h2 class="modal-title" id="modal-vehicle-title">—</h2>
+                        <div class="modal-version" id="modal-version">—</div>
+                    </div>
+                    <div class="modal-price-block">
+                        <div class="modal-fipe-price" id="modal-fipe" style="display:none"></div>
+                        <div class="modal-price" id="modal-price">—</div>
+                        <div class="modal-price-savings" id="modal-savings" style="display:none"></div>
+                    </div>
+                </div>
+
+                <!-- CTAs rápidos -->
+                <div class="modal-quick-cta" id="modal-quick-cta">
+                    <a class="modal-cta-wpp" id="modal-wpp-link" href="#" target="_blank">💬 WhatsApp</a>
+                    <button class="modal-cta-form" onclick="document.getElementById('modal-form-section').scrollIntoView({behavior:'smooth'})">📋 Enviar Proposta</button>
+                </div>
+
+                <div class="modal-specs-grid" id="modal-specs-grid"></div>
+                <div class="modal-desc" id="modal-desc" style="display:none"></div>
+                <div class="modal-optionals" id="modal-optionals" style="display:none">
+                    <div class="optionals-title">✦ Opcionais incluídos</div>
+                    <div class="optionals-tags" id="modal-optionals-tags"></div>
+                </div>
+
+                <!-- Form de contato sobre o veículo -->
+                <div class="contact-form" id="modal-form-section">
+                    <div class="contact-form-title">Tenho interesse neste veículo</div>
+                    <div class="contact-form-sub">Preencha seus dados e entraremos em contato em breve.</div>
+
+                    <div class="form-success" id="modal-form-success">
+                        <span class="form-success-icon">🎉</span>
+                        <h3>Mensagem enviada!</h3>
+                        <p>Recebemos seu interesse. Nossa equipe entrará em contato em breve.</p>
+                        <a class="success-action" id="modal-success-wpp" href="#">💬 Falar agora no WhatsApp</a>
+                    </div>
+
+                    <div id="modal-form-fields">
+                        <div class="form-row">
+                            <div class="form-field has-icon" id="ff-m-nome">
+                                <label for="m-nome">Nome completo *</label>
+                                <input type="text" id="m-nome" autocomplete="name" inputmode="text">
+                                <span class="field-icon">👤</span>
+                                <div class="field-error">Informe seu nome</div>
+                            </div>
+                            <div class="form-field has-icon" id="ff-m-telefone">
+                                <label for="m-telefone">WhatsApp / Telefone *</label>
+                                <input type="tel" id="m-telefone" autocomplete="tel" inputmode="numeric" maxlength="15">
+                                <span class="field-icon">📱</span>
+                                <div class="field-error">Informe um telefone válido</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field" id="ff-m-email">
+                                <label for="m-email">E-mail</label>
+                                <input type="email" id="m-email" autocomplete="email" inputmode="email">
+                                <div class="field-error">E-mail inválido</div>
+                            </div>
+                            <div class="form-field" id="ff-m-cidade">
+                                <label for="m-cidade">Cidade</label>
+                                <input type="text" id="m-cidade" autocomplete="address-level2">
+                            </div>
+                        </div>
+                        <div class="form-field has-icon" id="ff-m-valor">
+                            <label for="m-valor">Sua proposta (R$) — opcional</label>
+                            <input type="text" id="m-valor" inputmode="numeric" placeholder=" ">
+                            <span class="field-icon">💰</span>
+                        </div>
+                        <div class="form-field" id="ff-m-mensagem">
+                            <label for="m-mensagem">Mensagem</label>
+                            <textarea id="m-mensagem"></textarea>
+                        </div>
+                        <button class="form-submit" id="btn-modal-enviar">
+                            <span class="btn-spinner"></span>
+                            <span class="btn-text">Solicitar Contato →</span>
+                        </button>
+                        <div class="form-divider">ou fale diretamente</div>
+                        <a class="btn-wpp-alt" id="modal-wpp-alt" href="#" target="_blank">💬 Enviar mensagem no WhatsApp</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky CTA bar (mobile) -->
+            <div class="modal-sticky-cta" id="modal-sticky-cta">
+                <a class="modal-cta-wpp" id="modal-sticky-wpp" href="#" target="_blank">💬 WhatsApp</a>
+                <button class="modal-cta-form" onclick="document.getElementById('modal-form-section').scrollIntoView({behavior:'smooth'})">📋 Proposta</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <div class="toast-icon"></div>
+    <div>
+        <div class="toast-text"></div>
+        <div class="toast-sub"></div>
+    </div>
+</div>
+
+<script>
+// ==================== CONFIGURAÇÃO ====================
+const CONFIG = {
+    SUPABASE_URL: 'https://mlqgxjujaxfixaxertpn.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1scWd4anVqYXhmaXhheGVydHBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NDg3MzgsImV4cCI6MjA4NzQyNDczOH0.ri69N3__upUzWRHdsGHZ6CuGLy6l8PZnVCypw-WArK8',
+    WHATSAPP:        '5500000000000',                      // ← substitua (DDI+DDD+número)
+    NOME_LOJA:       'Elvis Veículos'
+};
+
+// ==================== SUPABASE ====================
+const supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+// ==================== ESTADO ====================
+let allVehicles = [];
+let currentVehicleId = null;
+let currentPhotoIndex = 0;
+
+// ==================== UTILITÁRIOS ====================
+const $ = id => document.getElementById(id);
+
+function formatPrice(val) {
+    if (!val && val !== 0) return '—';
+    return 'R$ ' + Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+function formatKm(val) {
+    if (!val) return '—';
+    return Number(val).toLocaleString('pt-BR') + ' km';
+}
+
+function escapeHTML(str) {
+    return String(str || '').replace(/[&<>"]/g, m =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m])
+    );
+}
+
+function scrollTo(selector) {
+    document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function showToast(icon, text, sub = '') {
+    const t = $('toast');
+    t.querySelector('.toast-icon').textContent = icon;
+    t.querySelector('.toast-text').textContent = text;
+    t.querySelector('.toast-sub').textContent  = sub;
+    t.classList.add('show');
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ==================== CARREGAR VEÍCULOS ====================
+async function loadVehicles() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('vehicles')
+            .select('*')
+            .eq('status', 'ativo')
+            .order('destaque', { ascending: false })
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        allVehicles = data || [];
+
+        renderStats();
+        renderDestaque();
+        renderGrid();
+        buildFilters();
+    } catch (err) {
+        console.error('Erro ao carregar veículos:', err);
+        $('vehicles-grid').innerHTML = `
+            <div class="state-empty">
+                <div class="state-empty-icon">⚠️</div>
+                <p>Não foi possível carregar o estoque. Tente novamente.</p>
+            </div>`;
+    }
+}
+
+// ==================== ESTATÍSTICAS HERO ====================
+function renderStats() {
+    const ativos = allVehicles.length;
+    const marcas = new Set(allVehicles.map(v => v.marca)).size;
+    const anos   = new Set(allVehicles.map(v => v.ano_modelo).filter(Boolean)).size;
+
+    $('stat-estoque').textContent = ativos;
+    $('stat-marcas').textContent  = marcas;
+    $('stat-anos').textContent    = anos;
+    $('vehicles-count').textContent = `${ativos} veículo${ativos !== 1 ? 's' : ''} encontrado${ativos !== 1 ? 's' : ''}`;
+}
+
+// ==================== DESTAQUE ====================
+function renderDestaque() {
+    const v = allVehicles.find(v => v.destaque) || allVehicles[0];
+    if (!v) {
+        $('destaque-card').innerHTML = '<div style="padding:60px;text-align:center;color:var(--muted);grid-column:1/-1">Nenhum veículo em destaque.</div>';
+        return;
+    }
+
+    // Hero bg
+    if (v.photos && v.photos.length) {
+        $('hero-img').src = v.photos[0];
+        $('hero-img').style.opacity = '0.45';
+        $('hero-title').innerHTML = `<em>${escapeHTML(v.marca)}</em><br>${escapeHTML(v.modelo)}`;
+        $('hero-sub').textContent  = `${v.versao || ''} · ${v.ano_modelo || v.ano_fabricacao || ''} · ${formatKm(v.km)}`.replace(/^ · | · $/g, '');
+    }
+
+    const thumbs = (v.photos || []).slice(0, 5);
+    const thumbsHTML = thumbs.map((url, i) => `
+        <div class="gallery-thumb ${i === 0 ? 'active' : ''}" data-idx="${i}" data-src="${url}">
+            <img src="${url}" alt="Foto ${i+1}" loading="lazy">
+        </div>`).join('');
+
+    $('destaque-card').innerHTML = `
+        <div class="destaque-gallery" id="destaque-gallery-img">
+            ${v.photos && v.photos.length
+                ? `<img src="${v.photos[0]}" alt="${escapeHTML(v.marca)} ${escapeHTML(v.modelo)}" id="dest-main-img">`
+                : `<div class="card-image-placeholder">🚗</div>`}
+            ${thumbs.length > 1 ? `<div class="gallery-thumbs">${thumbsHTML}</div>` : ''}
+        </div>
+        <div class="destaque-info">
+            <div class="destaque-badge">⭐ Destaque da semana</div>
+            <div class="destaque-name">${escapeHTML(v.marca)} ${escapeHTML(v.modelo)}</div>
+            <div class="destaque-version">${escapeHTML(v.versao || '')} ${v.ano_fabricacao ? `· ${v.ano_fabricacao}` : ''}</div>
+            <div class="destaque-specs">
+                <div class="spec-item"><div class="spec-label">Ano Modelo</div><div class="spec-value">${v.ano_modelo || '—'}</div></div>
+                <div class="spec-item"><div class="spec-label">Quilometragem</div><div class="spec-value">${formatKm(v.km)}</div></div>
+                <div class="spec-item"><div class="spec-label">Câmbio</div><div class="spec-value">${escapeHTML(v.cambio || '—')}</div></div>
+                <div class="spec-item"><div class="spec-label">Combustível</div><div class="spec-value">${escapeHTML(v.combustivel || '—')}</div></div>
+            </div>
+            <div class="destaque-price-row">
+                <div class="destaque-price">
+                    ${v.fipe ? `<small>FIPE: ${formatPrice(v.fipe)}</small>` : ''}
+                    ${formatPrice(v.preco)}
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button class="btn-primary" onclick="openModal(${v.id})">Ver Detalhes</button>
+                <a href="https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(`Olá! Tenho interesse no ${v.marca} ${v.modelo} ${v.ano_modelo || ''}. Vi no site da ${CONFIG.NOME_LOJA}.`)}" target="_blank">
+                    <button class="btn-ghost">💬 WhatsApp</button>
+                </a>
+            </div>
+        </div>`;
+
+    // Thumbnails destaque
+    document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+            $('dest-main-img').src = thumb.dataset.src;
+            document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        });
+    });
+}
+
+// ==================== GRID DE VEÍCULOS ====================
+function renderGrid(filtered = null) {
+    const list = filtered ?? allVehicles;
+    const grid = $('vehicles-grid');
+
+    if (!list.length) {
+        grid.innerHTML = `
+            <div class="state-empty">
+                <div class="state-empty-icon">🔍</div>
+                <p>Nenhum veículo encontrado com esses filtros.</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = list.map((v, i) => {
+        const img = v.photos && v.photos.length
+            ? `<img src="${v.photos[0]}" alt="${escapeHTML(v.marca)} ${escapeHTML(v.modelo)}" loading="lazy">`
+            : `<div class="card-image-placeholder">🚗</div>`;
+
+        return `
+        <div class="vehicle-card" data-id="${v.id}" style="animation-delay:${i * 0.05}s">
+            <div class="card-image">
+                ${img}
+                ${v.destaque ? '<div class="card-badge-destaque">★ Destaque</div>' : ''}
+                ${v.photos && v.photos.length > 1 ? `<div class="card-photo-count">📷 ${v.photos.length}</div>` : ''}
+            </div>
+            <div class="card-body">
+                <div class="card-title">${escapeHTML(v.marca)} ${escapeHTML(v.modelo)}</div>
+                <div class="card-version">${escapeHTML(v.versao || '')} ${v.ano_modelo ? `· ${v.ano_modelo}` : ''}</div>
+                <div class="card-specs">
+                    ${v.km != null ? `<span class="card-spec">🛣 <strong>${formatKm(v.km)}</strong></span>` : ''}
+                    ${v.cambio    ? `<span class="card-spec">⚙️ <strong>${escapeHTML(v.cambio)}</strong></span>` : ''}
+                    ${v.combustivel ? `<span class="card-spec">⛽ <strong>${escapeHTML(v.combustivel)}</strong></span>` : ''}
+                    ${v.cor       ? `<span class="card-spec">🎨 <strong>${escapeHTML(v.cor)}</strong></span>` : ''}
+                </div>
+                <div class="card-footer">
+                    <div class="card-price">${formatPrice(v.preco)}</div>
+                    <button class="card-cta">Ver mais</button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.vehicle-card').forEach(card => {
+        card.addEventListener('click', () => openModal(Number(card.dataset.id)));
+    });
+}
+
+// ==================== FILTROS ====================
+function buildFilters() {
+    const marcas = [...new Set(allVehicles.map(v => v.marca).filter(Boolean))].sort();
+    const sel = $('f-marca');
+    sel.innerHTML = '<option value="">Todas as marcas</option>' +
+        marcas.map(m => `<option value="${m}">${escapeHTML(m)}</option>`).join('');
+}
+
+function applyFilters() {
+    const busca     = $('f-busca').value.toLowerCase();
+    const marca     = $('f-marca').value;
+    const cambio    = $('f-cambio').value;
+    const comb      = $('f-combustivel').value;
+    const precoFx   = $('f-preco').value;
+
+    let list = allVehicles.filter(v => {
+        if (busca && !(`${v.marca} ${v.modelo} ${v.versao || ''}`.toLowerCase().includes(busca))) return false;
+        if (marca  && v.marca !== marca) return false;
+        if (cambio && v.cambio !== cambio) return false;
+        if (comb   && v.combustivel !== comb) return false;
+        if (precoFx) {
+            const [min, max] = precoFx.split('-').map(Number);
+            if (v.preco < min || v.preco > max) return false;
+        }
+        return true;
+    });
+
+    $('vehicles-count').textContent = `${list.length} veículo${list.length !== 1 ? 's' : ''} encontrado${list.length !== 1 ? 's' : ''}`;
+    renderGrid(list);
+}
+
+['f-busca','f-marca','f-cambio','f-combustivel','f-preco'].forEach(id => {
+    $(id)?.addEventListener('input', applyFilters);
+    $(id)?.addEventListener('change', applyFilters);
+});
+
+$('btn-reset')?.addEventListener('click', () => {
+    ['f-busca','f-marca','f-cambio','f-combustivel','f-preco'].forEach(id => {
+        const el = $(id);
+        if (el) el.value = '';
+    });
+    $('vehicles-count').textContent = `${allVehicles.length} veículos encontrados`;
+    renderGrid();
+});
+
+// ==================== UTILITÁRIOS DE FORMULÁRIO ====================
+function phoneMask(val) {
+    let v = val.replace(/\D/g, '').substring(0, 11);
+    if (v.length <= 10) {
+        return v.replace(/(\d{0,2})(\d{0,4})(\d{0,4})/, (_, a, b, c) =>
+            a ? `(${a}${b ? `) ${b}${c ? '-' + c : ''}` : ''})` : '');
+    }
+    return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+}
+
+function parseValorProposta(str) {
+    if (!str) return null;
+    const cleaned = str.replace(/[R$\s.]/g, '').replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+}
+
+function setupFloatingLabels(fieldIds) {
+    fieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const wrapper = el.closest('.form-field');
+        if (!wrapper) return;
+        const checkValue = () => {
+            if (el.value.trim()) wrapper.classList.add('has-value');
+            else wrapper.classList.remove('has-value');
+        };
+        el.addEventListener('input', checkValue);
+        el.addEventListener('change', checkValue);
+        checkValue();
+    });
+}
+
+function setupPhoneMask(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('input', e => {
+        const cursor = e.target.selectionStart;
+        e.target.value = phoneMask(e.target.value);
+    });
+}
+
+function validateField(inputId, wrapperId, test) {
+    const el = document.getElementById(inputId);
+    const wrapper = document.getElementById(wrapperId);
+    if (!el || !wrapper) return true;
+    const valid = test(el.value);
+    wrapper.classList.toggle('show-error', !valid);
+    el.classList.toggle('error', !valid);
+    return valid;
+}
+
+function clearFieldError(inputId, wrapperId) {
+    const el = document.getElementById(inputId);
+    const wrapper = document.getElementById(wrapperId);
+    if (!el || !wrapper) return;
+    wrapper.classList.remove('show-error');
+    el.classList.remove('error');
+}
+
+// ==================== MODAL ====================
+function openModal(id) {
+    const v = allVehicles.find(v => v.id === id);
+    if (!v) return;
+    currentVehicleId = id;
+    currentPhotoIndex = 0;
+
+    $('modal-vehicle-title').textContent = `${v.marca} ${v.modelo}`;
+
+    // Versão com dots separadores visuais
+    const versionParts = [v.versao, v.ano_fabricacao ? `${v.ano_fabricacao}` : null, v.ano_modelo ? `Mod. ${v.ano_modelo}` : null].filter(Boolean);
+    $('modal-version').innerHTML = versionParts.map((p,i) =>
+        i === 0 ? escapeHTML(p) : `<span class="modal-version-dot"></span>${escapeHTML(p)}`
+    ).join('');
+
+    // Preço + FIPE
+    $('modal-price').textContent = formatPrice(v.preco);
+    const fipeEl = $('modal-fipe');
+    const savingsEl = $('modal-savings');
+    if (v.fipe && v.fipe > v.preco) {
+        fipeEl.textContent = `FIPE: ${formatPrice(v.fipe)}`;
+        fipeEl.style.display = 'block';
+        const saved = v.fipe - v.preco;
+        savingsEl.textContent = `↓ R$ ${Math.round(saved/1000)}k abaixo da FIPE`;
+        savingsEl.style.display = 'block';
+    } else {
+        fipeEl.style.display = 'none';
+        savingsEl.style.display = 'none';
+    }
+
+    // WA links
+    const wamsg = encodeURIComponent(`Olá! Tenho interesse no ${v.marca} ${v.modelo} ${v.ano_modelo || ''}. Vi no site da ${CONFIG.NOME_LOJA}.`);
+    const waUrl = `https://wa.me/${CONFIG.WHATSAPP}?text=${wamsg}`;
+    ['modal-wpp-link','modal-wpp-alt','modal-sticky-wpp'].forEach(elId => {
+        const a = $(elId);
+        if (a) a.href = waUrl;
+    });
+
+    // Specs
+    const specs = [
+        { label: 'Quilometragem', value: formatKm(v.km), icon: '🛣' },
+        { label: 'Câmbio',        value: v.cambio,        icon: '⚙️' },
+        { label: 'Combustível',   value: v.combustivel,   icon: '⛽' },
+        { label: 'Cor',           value: v.cor,           icon: '🎨' },
+        { label: 'Motor',         value: v.motor,         icon: '🔧' },
+        { label: 'Portas',        value: v.portas ? `${v.portas} portas` : null, icon: '🚪' },
+        { label: 'Final da Placa',value: v.final_placa,   icon: '🔢' },
+    ].filter(s => s.value);
+
+    $('modal-specs-grid').innerHTML = specs.map(s => `
+        <div class="modal-spec">
+            <div class="modal-spec-label">${s.icon} ${s.label}</div>
+            <div class="modal-spec-value">${escapeHTML(String(s.value))}</div>
+        </div>`).join('');
+
+    // Descrição
+    if (v.descricao) {
+        $('modal-desc').textContent = v.descricao;
+        $('modal-desc').style.display = 'block';
+    } else { $('modal-desc').style.display = 'none'; }
+
+    // Opcionais
+    if (v.optionals && v.optionals.length) {
+        $('modal-optionals').style.display = 'block';
+        $('modal-optionals-tags').innerHTML = v.optionals.map(o =>
+            `<span class="optional-tag">${escapeHTML(o)}</span>`).join('');
+    } else { $('modal-optionals').style.display = 'none'; }
+
+    // Form reset
+    const msgDefault = `Olá! Tenho interesse no ${v.marca} ${v.modelo} ${v.ano_modelo || ''}. Poderia me passar mais informações?`;
+    ['m-nome','m-telefone','m-email','m-cidade','m-valor'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+    const msgEl = $('m-mensagem');
+    if (msgEl) msgEl.value = msgDefault;
+    $('modal-form-success').classList.remove('show');
+    const formFields = $('modal-form-fields');
+    if (formFields) formFields.style.display = 'block';
+    const btn = $('btn-modal-enviar');
+    if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+    ['ff-m-nome','ff-m-telefone','ff-m-email','ff-m-cidade','ff-m-mensagem','ff-m-valor'].forEach(id => {
+        const w = $(id);
+        if (w) { w.classList.remove('show-error','has-value'); }
+    });
+    // Trigger has-value for pre-filled message
+    if (msgEl && msgEl.value) $('ff-m-mensagem')?.classList.add('has-value');
+
+    // Galeria
+    renderModalGallery(v.photos || []);
+
+    $('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    // Scroll to top of modal
+    setTimeout(() => { const m = $('modal'); if (m) m.scrollTop = 0; }, 50);
+}
+
+function renderModalGallery(photos) {
+    const main   = $('modal-gallery-main');
+    const thumbs = $('modal-gallery-thumbs');
+    const dots   = $('gallery-dots');
+    const counter = $('gallery-counter');
+
+    if (!photos.length) {
+        main.innerHTML = `<div class="card-image-placeholder" style="height:100%;background:var(--bg4)">🚗</div>`;
+        thumbs.innerHTML = ''; dots.innerHTML = '';
+        $('gallery-prev').style.display = 'none';
+        $('gallery-next').style.display = 'none';
+        if (counter) counter.style.display = 'none';
+        return;
+    }
+
+    const showNavs = photos.length > 1;
+    $('gallery-prev').style.display = showNavs ? 'grid' : 'none';
+    $('gallery-next').style.display = showNavs ? 'grid' : 'none';
+    if (counter) counter.style.display = showNavs ? 'block' : 'none';
+
+    // Thumbs (desktop)
+    thumbs.innerHTML = photos.slice(0, 10).map((url, i) => `
+        <div class="modal-thumb ${i===0?'active':''}" data-idx="${i}">
+            <img src="${url}" alt="Foto ${i+1}" loading="lazy">
+        </div>`).join('');
+
+    // Dots (mobile)
+    const maxDots = Math.min(photos.length, 8);
+    dots.innerHTML = Array.from({length: maxDots}, (_, i) =>
+        `<div class="gallery-dot ${i===0?'active':''}" data-idx="${i}"></div>`).join('');
+
+    function showPhoto(idx) {
+        currentPhotoIndex = (idx + photos.length) % photos.length;
+        const img = main.querySelector('img');
+        if (img) {
+            img.style.opacity = '0';
+            setTimeout(() => { img.src = photos[currentPhotoIndex]; img.style.opacity = '1'; }, 120);
+        } else {
+            main.innerHTML = `<img src="${photos[currentPhotoIndex]}" alt="Foto ${currentPhotoIndex+1}" style="width:100%;height:100%;object-fit:cover;transition:opacity 0.25s;">`;
+        }
+        thumbs.querySelectorAll('.modal-thumb').forEach((t,i) => t.classList.toggle('active', i === currentPhotoIndex));
+        dots.querySelectorAll('.gallery-dot').forEach((d,i) => d.classList.toggle('active', i === currentPhotoIndex));
+        if (counter) counter.textContent = `${currentPhotoIndex + 1} / ${photos.length}`;
+    }
+
+    thumbs.querySelectorAll('.modal-thumb').forEach(t =>
+        t.addEventListener('click', () => showPhoto(Number(t.dataset.idx))));
+    dots.querySelectorAll('.gallery-dot').forEach(d =>
+        d.addEventListener('click', () => showPhoto(Number(d.dataset.idx))));
+
+    $('gallery-prev').onclick = () => showPhoto(currentPhotoIndex - 1);
+    $('gallery-next').onclick = () => showPhoto(currentPhotoIndex + 1);
+
+    // Touch / swipe support
+    const gallery = $('modal-gallery');
+    let touchStartX = 0, touchStartY = 0;
+    gallery.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    gallery.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+            dx < 0 ? showPhoto(currentPhotoIndex + 1) : showPhoto(currentPhotoIndex - 1);
+        }
+    }, { passive: true });
+
+    showPhoto(0);
+}
+
+function closeModal() {
+    $('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    currentVehicleId = null;
+}
+
+$('modal-close').addEventListener('click', closeModal);
+$('modal-overlay').addEventListener('click', e => { if (e.target === $('modal-overlay')) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ==================== ENVIAR LEAD ====================
+async function submitLead({ nome, telefone, email, cidade, mensagem, vehicle_id, valor_proposta, origem }) {
+    const payload = {
+        nome:     nome.trim(),
+        telefone: telefone.replace(/\D/g,''),
+        email:    email?.trim() || null,
+        cidade:   cidade?.trim() || null,
+        mensagem: mensagem?.trim() || null,
+        origem:   origem || null,
+        status:   'novo'
+    };
+    if (vehicle_id !== null && vehicle_id !== undefined && !isNaN(Number(vehicle_id))) {
+        payload.vehicle_id = Number(vehicle_id);
+    }
+    const vp = valor_proposta ? parseValorProposta(String(valor_proposta)) : null;
+    if (vp && vp > 0) payload.valor_proposta = vp;
+
+    try {
+        const { data, error } = await supabaseClient.from('leads').insert([payload]).select();
+        if (error) {
+            const msg = error.message || error.details || 'Erro desconhecido';
+            showToast('❌', 'Erro ao enviar.', msg.substring(0, 60));
+            return false;
+        }
+        return true;
+    } catch (err) {
+        showToast('❌', 'Falha na conexão.', 'Verifique sua internet e tente novamente.');
+        return false;
+    }
+}
+
+// Form modal
+$('btn-modal-enviar').addEventListener('click', async () => {
+    const nome = $('m-nome').value.trim();
+    const tel  = $('m-telefone').value.replace(/\D/g,'');
+    let valid  = true;
+    valid &= validateField('m-nome',     'ff-m-nome',     v => v.trim().length >= 2);
+    valid &= validateField('m-telefone', 'ff-m-telefone', v => v.replace(/\D/g,'').length >= 10);
+    if (!valid) { showToast('⚠️', 'Preencha os campos obrigatórios.'); return; }
+
+    const btn = $('btn-modal-enviar');
+    btn.disabled = true; btn.classList.add('loading');
+    const vid = currentVehicleId;
+    const v   = allVehicles.find(x => x.id === vid);
+
+    const ok = await submitLead({
+        nome, telefone: $('m-telefone').value,
+        email:          $('m-email').value,
+        cidade:         $('m-cidade').value,
+        mensagem:       $('m-mensagem').value,
+        vehicle_id:     vid,
+        valor_proposta: $('m-valor').value,
+        origem:         'modal-veiculo'
+    });
+
+    if (ok) {
+        $('modal-form-success').classList.add('show');
+        $('modal-form-fields').style.display = 'none';
+        if (v) {
+            const wamsg = encodeURIComponent(`Olá! Enviei meu interesse no ${v.marca} ${v.modelo} pelo site da ${CONFIG.NOME_LOJA}.`);
+            $('modal-success-wpp').href = `https://wa.me/${CONFIG.WHATSAPP}?text=${wamsg}`;
+        }
+        showToast('✅', 'Mensagem enviada!', 'Em breve entraremos em contato.');
+    } else {
+        btn.disabled = false; btn.classList.remove('loading');
+    }
+});
+
+// Form geral
+$('btn-enviar').addEventListener('click', async () => {
+    let valid = true;
+    valid &= validateField('c-nome',     'ff-c-nome',     v => v.trim().length >= 2);
+    valid &= validateField('c-telefone', 'ff-c-telefone', v => v.replace(/\D/g,'').length >= 10);
+    if (!valid) { showToast('⚠️', 'Preencha os campos obrigatórios.'); return; }
+
+    const btn = $('btn-enviar');
+    btn.disabled = true; btn.classList.add('loading');
+
+    const ok = await submitLead({
+        nome:           $('c-nome').value,
+        telefone:       $('c-telefone').value,
+        email:          $('c-email').value,
+        cidade:         $('c-cidade').value,
+        mensagem:       $('c-mensagem').value,
+        vehicle_id:     null, valor_proposta: null,
+        origem:         'formulario-contato'
+    });
+
+    if (ok) {
+        $('form-success').classList.add('show');
+        $('general-form-fields').style.display = 'none';
+        const wamsg = encodeURIComponent(`Olá! Enviei uma mensagem pelo site da ${CONFIG.NOME_LOJA} e gostaria de mais informações.`);
+        const successWpp = $('general-success-wpp');
+        if (successWpp) successWpp.href = `https://wa.me/${CONFIG.WHATSAPP}?text=${wamsg}`;
+        showToast('✅', 'Mensagem enviada!', 'Em breve entraremos em contato.');
+    } else {
+        btn.disabled = false; btn.classList.remove('loading');
+    }
+});
+
+// ==================== FLOATING LABELS + PHONE MASK ====================
+setupFloatingLabels(['m-nome','m-telefone','m-email','m-cidade','m-mensagem','m-valor',
+                     'c-nome','c-telefone','c-email','c-cidade','c-mensagem']);
+setupPhoneMask('m-telefone');
+setupPhoneMask('c-telefone');
+
+// Clear errors on input
+['m-nome','ff-m-nome','m-telefone','ff-m-telefone'].forEach((pair, i) => {
+    if (i % 2 === 0) {
+        const el = document.getElementById(pair);
+        const wrapId = ['m-nome','ff-m-nome','m-telefone','ff-m-telefone'][i+1];
+        if (el) el.addEventListener('input', () => clearFieldError(pair, wrapId));
+    }
+});
+document.getElementById('c-nome')?.addEventListener('input', () => clearFieldError('c-nome','ff-c-nome'));
+document.getElementById('c-telefone')?.addEventListener('input', () => clearFieldError('c-telefone','ff-c-telefone'));
+
+// ==================== WHATSAPP ===
+const _wamsg = encodeURIComponent(`Olá! Vim pelo site da ${CONFIG.NOME_LOJA} e gostaria de mais informações.`);
+document.getElementById('whatsapp-link').href = `https://wa.me/${CONFIG.WHATSAPP}?text=${_wamsg}`;
+document.getElementById('general-wpp-alt').href = `https://wa.me/${CONFIG.WHATSAPP}?text=${_wamsg}`;
+
+// ==================== INIT ====================
+loadVehicles();
+</script>
+</body>
+</html>

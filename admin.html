@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — ELVIS VEÍCULOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./admin-style.css">
+    <style>
+    .cache-badge {
+        margin-left: auto;
+        font-size: 9px; font-weight: 700; letter-spacing: .4px;
+        padding: 2px 7px; border-radius: 100px;
+        background: rgba(201,168,76,0.12);
+        color: #C9A84C;
+        border: 1px solid rgba(201,168,76,0.2);
+        white-space: nowrap; transition: .2s;
+    }
+    .cache-badge.empty {
+        background: rgba(255,255,255,0.05);
+        color: #6b6b72;
+        border-color: rgba(255,255,255,0.08);
+    }
+    #nav-clear-cache { cursor: pointer; }
+    #nav-clear-cache:hover .cache-badge { background: rgba(224,85,85,0.15); color: #E05555; border-color: rgba(224,85,85,0.2); }
+    </style>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SortableJS para ordenação de fotos -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+</head>
+<body>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast" role="alert">
+        <div class="toast-icon">✅</div>
+        <div>
+            <div class="toast-text"></div>
+            <div class="toast-sub"></div>
+        </div>
+    </div>
+
+    <!-- ===================== LOGIN ===================== -->
+    <div id="login-screen">
+        <div class="login-box">
+            <div class="login-logo">
+                <div class="login-icon">E</div>
+                <div class="login-title">ELVIS VEÍCULOS</div>
+                <div class="login-sub">Painel Administrativo</div>
+            </div>
+            <div id="login-error" class="login-error">❌ Usuário ou senha incorretos.</div>
+            <div class="form-group">
+                <label for="login-user">E-mail</label>
+                <input type="email" id="login-user" placeholder="admin@elvisveiculos.com.br" autocomplete="off">
+                <small style="display:block;margin-top:4px;color:var(--gray);font-size:10px;">
+                    Acesso permitido apenas para administradores cadastrados.
+                </small>
+            </div>
+            <div class="form-group">
+                <label for="login-pass">Senha</label>
+                <input type="password" id="login-pass" placeholder="••••••••">
+            </div>
+            <button id="btn-login">Entrar no Painel</button>
+            <div class="login-hint">Acesso restrito a administradores.</div>
+        </div>
+    </div>
+
+    <!-- ===================== PAINEL ADMIN ===================== -->
+    <div id="admin-screen">
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <div class="s-icon">E</div>
+                <div class="brand">ELVIS VEÍCULOS</div>
+                <div class="brand-sub">Painel Admin</div>
+            </div>
+            <div class="sidebar-nav">
+                <div class="nav-section-label">Principal</div>
+                <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+                <div class="nav-item" data-page="cadastro"><span class="nav-icon">➕</span> Cadastrar Veículo</div>
+                <div class="nav-item" data-page="estoque"><span class="nav-icon">🚗</span> Estoque</div>
+                <div class="nav-item" data-page="leads"><span class="nav-icon">💬</span> Leads</div>
+                <div class="nav-section-label" style="margin-top:12px">Sistema</div>
+                <div class="nav-item" data-action="soon"><span class="nav-icon">⚙️</span> Configurações</div>
+                <div class="nav-item" data-action="site"><span class="nav-icon">🌐</span> Ver Site</div>
+                <div class="nav-item" data-action="clear-fipe-cache" id="nav-clear-cache" title="Limpa o cache local das marcas e modelos FIPE">
+                    <span class="nav-icon">🗄️</span>
+                    <span>Cache FIPE</span>
+                    <span class="cache-badge" id="cache-badge">—</span>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="admin-user">
+                    <div class="admin-avatar">A</div>
+                    <div>
+                        <div class="admin-name">Administrador</div>
+                        <div class="admin-role">Elvis Veículos</div>
+                    </div>
+                </div>
+                <button id="btn-logout">🚪 Sair</button>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="topbar">
+                <div>
+                    <div class="topbar-title" id="page-title">Dashboard</div>
+                    <div class="topbar-sub" id="page-sub">Visão geral do estoque</div>
+                </div>
+                <div class="topbar-actions">
+                    <div class="topbar-date" id="topbar-date"></div>
+                    <button id="btn-new-veiculo">+ Novo Veículo</button>
+                </div>
+            </div>
+
+            <div class="content">
+
+                <!-- ========== DASHBOARD ========== -->
+                <div class="page active" id="page-dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-top"><div class="stat-label">Total Estoque</div><div class="stat-icon">🚗</div></div>
+                            <div class="stat-value" id="stat-total">0</div>
+                            <div class="stat-change" id="stat-change-total">Veículos cadastrados</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-top"><div class="stat-label">Ativos</div><div class="stat-icon">✅</div></div>
+                            <div class="stat-value" id="stat-ativos">0</div>
+                            <div class="stat-change" id="stat-change-ativos">Disponíveis no site</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-top"><div class="stat-label">Leads (7 dias)</div><div class="stat-icon">💬</div></div>
+                            <div class="stat-value" id="stat-leads-semana">0</div>
+                            <div class="stat-change" id="stat-change-leads">Total: <span id="stat-leads-total">0</span></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-top"><div class="stat-label">Valor em Estoque</div><div class="stat-icon">💰</div></div>
+                            <div class="stat-value" id="stat-valor">R$ 0</div>
+                            <div class="stat-change" id="stat-media">Média: R$ 0</div>
+                        </div>
+                    </div>
+
+                    <div class="dash-grid">
+                        <!-- Últimos Veículos -->
+                        <div class="card">
+                            <div class="card-title">🚗 Últimos Veículos</div>
+                            <div class="stock-list" id="dashboard-list"></div>
+                        </div>
+
+                        <!-- Gráficos -->
+                        <div style="display:flex;flex-direction:column;gap:20px;">
+                            <div class="card">
+                                <div class="card-title">📈 Leads por dia (últimos 7 dias)</div>
+                                <canvas id="leadsChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">🥧 Leads por Status</div>
+                                <canvas id="leadsPieChart" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Últimos Leads -->
+                    <div class="card" style="margin-top:20px;">
+                        <div class="card-title">🆕 Últimos Leads</div>
+                        <div class="alert-list" id="alert-list"></div>
+                    </div>
+                </div>
+
+                <!-- ========== CADASTRO ========== -->
+                <div class="page" id="page-cadastro">
+                    <div class="form-card">
+                        <div class="form-section-title">🚗 Dados do Veículo</div>
+                        <div class="form-grid cols3">
+                            <div class="fg">
+                                <label for="f-marca">
+                                    Marca *
+                                    <span class="fipe-loading" id="fipe-loading-marca" style="display:none">⏳</span>
+                                </label>
+                                <select id="f-marca" required>
+                                    <option value="">Carregando marcas FIPE...</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-modelo">
+                                    Modelo *
+                                    <span class="fipe-loading" id="fipe-loading-modelo" style="display:none">⏳</span>
+                                </label>
+                                <select id="f-modelo" required disabled>
+                                    <option value="">Selecione a marca primeiro</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-versao">
+                                    Versão
+                                    <span class="fipe-loading" id="fipe-loading-versao" style="display:none">⏳</span>
+                                </label>
+                                <select id="f-versao" disabled>
+                                    <option value="">Selecione o modelo primeiro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-grid cols3">
+                            <div class="fg">
+                                <label for="f-ano-fipe">
+                                    Ano / Combustível (FIPE) *
+                                    <span class="fipe-loading" id="fipe-loading-ano" style="display:none">⏳</span>
+                                </label>
+                                <select id="f-ano-fipe" disabled>
+                                    <option value="">Selecione o modelo primeiro</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-ano-fabricacao">Ano Fabricação</label>
+                                <input type="number" id="f-ano-fabricacao" placeholder="2011" min="1900" max="2100">
+                            </div>
+                            <div class="fg">
+                                <label for="f-ano-modelo">Ano Modelo</label>
+                                <input type="number" id="f-ano-modelo" placeholder="2012" min="1900" max="2100">
+                            </div>
+                        </div>
+                        <div class="form-grid cols3">
+                            <div class="fg">
+                                <label for="f-preco">Preço (R$) *</label>
+                                <input type="text" id="f-preco" placeholder="Ex: 74.990,00" required>
+                            </div>
+                            <div class="fg fipe-result-box" id="fipe-result-box" style="display:none">
+                                <label>💡 Dados FIPE Obtidos</label>
+                                <div class="fipe-result" id="fipe-result-info"></div>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="fg">
+                                <label for="f-km">Quilometragem</label>
+                                <input type="number" id="f-km" placeholder="Ex: 98000">
+                            </div>
+                            <div class="fg">
+                                <label for="f-motor">Motor</label>
+                                <input type="text" id="f-motor" placeholder="Ex: 3.0 V6 270cv">
+                            </div>
+                            <div class="fg">
+                                <label for="f-fipe">Preço FIPE (R$)</label>
+                                <input type="text" id="f-fipe" placeholder="Ex: 79.100,00">
+                            </div>
+                        </div>
+
+                        <div class="form-section-title" style="margin-top:4px">⚙️ Características</div>
+                        <div class="form-grid cols3">
+                            <div class="fg">
+                                <label for="f-comb">Combustível</label>
+                                <select id="f-comb">
+                                    <option>Flex</option>
+                                    <option>Gasolina</option>
+                                    <option>Diesel</option>
+                                    <option>Elétrico</option>
+                                    <option>Híbrido</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-cambio">Câmbio</label>
+                                <select id="f-cambio">
+                                    <option>Automático</option>
+                                    <option>Manual</option>
+                                    <option>CVT</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-cor">Cor</label>
+                                <input type="text" id="f-cor" placeholder="Ex: Prata Metálico">
+                            </div>
+                            <div class="fg">
+                                <label for="f-portas">Portas</label>
+                                <select id="f-portas">
+                                    <option value="4">4 Portas</option>
+                                    <option value="2">2 Portas</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-final-placa">Final de Placa</label>
+                                <select id="f-final-placa">
+                                    <option>1</option><option>2</option><option>3</option>
+                                    <option>4</option><option>5</option><option>6</option>
+                                    <option>7</option><option>8</option><option>9</option><option>0</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-status">Status do Anúncio</label>
+                                <select id="f-status">
+                                    <option value="ativo">✅ Ativo</option>
+                                    <option value="pausado">⏸ Pausado</option>
+                                    <option value="vendido">❌ Vendido</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label for="f-destaque">Destaque no site</label>
+                                <select id="f-destaque">
+                                    <option value="false">Não</option>
+                                    <option value="true">Sim (apenas um veículo pode ser destaque)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-grid cols1">
+                            <div class="fg">
+                                <label for="f-desc">Descrição / Observações</label>
+                                <textarea id="f-desc" placeholder="Descreva o veículo, histórico, revisões realizadas, diferenciais..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">✨ Opcionais</div>
+                        <div class="optionals-check" id="optionals-container"></div>
+
+                        <div class="form-section-title">📸 Fotos do Veículo</div>
+                        <div class="upload-zone" id="upload-zone">
+                            <span class="upload-icon">📷</span>
+                            <div class="upload-title">Arraste as fotos aqui</div>
+                            <div class="upload-sub">JPG, PNG, WEBP — até 10MB por foto — máximo 12 fotos</div>
+                            <button class="upload-btn" id="btn-upload">Selecionar Fotos do Dispositivo</button>
+                            <input type="file" id="file-input" multiple accept="image/*">
+                        </div>
+                        <div class="photos-preview" id="photos-preview"></div>
+                        <div class="photo-count" id="photo-count"></div>
+
+                        <div class="form-actions">
+                            <button id="btn-limpar">Limpar Formulário</button>
+                            <button id="btn-salvar">💾 Salvar no Estoque</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== ESTOQUE ========== -->
+                <div class="page" id="page-estoque">
+                    <div class="card">
+                        <div class="estoque-topbar">
+                            <div class="card-title" style="margin-bottom:0">🚗 Estoque Completo</div>
+                            <input type="text" id="search-estoque" placeholder="🔍 Buscar veículo...">
+                        </div>
+                        <div class="stock-list" id="estoque-list"></div>
+                    </div>
+                </div>
+
+                <!-- ========== LEADS ========== -->
+                <div class="page" id="page-leads">
+                    <!-- KPI Strip -->
+                    <div class="leads-kpi-strip" id="leads-kpi-strip">
+                        <div class="lkpi" id="lkpi-total"><span class="lkpi-val">0</span><span class="lkpi-label">Total</span></div>
+                        <div class="lkpi lkpi-new" id="lkpi-novo"><span class="lkpi-val">0</span><span class="lkpi-label">Novos</span></div>
+                        <div class="lkpi" id="lkpi-contato"><span class="lkpi-val">0</span><span class="lkpi-label">Em Contato</span></div>
+                        <div class="lkpi" id="lkpi-negociacao"><span class="lkpi-val">0</span><span class="lkpi-label">Negociação</span></div>
+                        <div class="lkpi lkpi-fechado" id="lkpi-fechado"><span class="lkpi-val">0</span><span class="lkpi-label">Fechados</span></div>
+                        <div class="lkpi lkpi-valor" id="lkpi-valor"><span class="lkpi-val">R$ 0</span><span class="lkpi-label">Propostas</span></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="leads-topbar">
+                            <div class="card-title" style="margin-bottom:0">💬 Leads Recebidos</div>
+                            <div class="leads-filters">
+                                <input type="text" id="search-leads" placeholder="🔍 Buscar nome, telefone, cidade...">
+                                <select id="filter-lead-status">
+                                    <option value="">Todos os status</option>
+                                    <option value="novo">🆕 Novo</option>
+                                    <option value="em_contato">📞 Em Contato</option>
+                                    <option value="proposta_enviada">💰 Proposta Enviada</option>
+                                    <option value="negociacao">🤝 Negociação</option>
+                                    <option value="fechado">✅ Fechado</option>
+                                    <option value="perdido">❌ Perdido</option>
+                                </select>
+                                <select id="filter-lead-origem">
+                                    <option value="">Todas as origens</option>
+                                    <option value="site">Site</option>
+                                    <option value="whatsapp">WhatsApp</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="indicacao">Indicação</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="leads-list" id="leads-list"></div>
+                    </div>
+                </div>
+
+            </div><!-- /.content -->
+        </div><!-- /.main -->
+    </div><!-- /#admin-screen -->
+
+    <!-- ========== MODAL DE LEAD ========== -->
+    <div class="lead-modal-overlay" id="lead-modal-overlay">
+        <div class="lead-modal" id="lead-modal">
+            <div class="lead-modal-header">
+                <div>
+                    <div class="lead-modal-name" id="lm-name">—</div>
+                    <div class="lead-modal-sub" id="lm-vehicle">—</div>
+                </div>
+                <button class="lead-modal-close" id="lead-modal-close">✕</button>
+            </div>
+            <div class="lead-modal-body">
+                <div class="lead-modal-cols">
+                    <div class="lm-section">
+                        <div class="lm-section-title">👤 Contato</div>
+                        <div class="lm-row"><span>Telefone</span><a id="lm-tel" href="#" target="_blank">—</a></div>
+                        <div class="lm-row"><span>E-mail</span><span id="lm-email">—</span></div>
+                        <div class="lm-row"><span>Cidade</span><span id="lm-cidade">—</span></div>
+                        <div class="lm-row"><span>Origem</span><span id="lm-origem" class="lm-badge">—</span></div>
+                    </div>
+                    <div class="lm-section">
+                        <div class="lm-section-title">💼 Negócio</div>
+                        <div class="lm-row"><span>Status</span>
+                            <select id="lm-status-sel" class="lm-select">
+                                <option value="novo">🆕 Novo</option>
+                                <option value="em_contato">📞 Em Contato</option>
+                                <option value="proposta_enviada">💰 Proposta Enviada</option>
+                                <option value="negociacao">🤝 Negociação</option>
+                                <option value="fechado">✅ Fechado</option>
+                                <option value="perdido">❌ Perdido</option>
+                            </select>
+                        </div>
+                        <div class="lm-row"><span>Valor Proposta</span>
+                            <div class="lm-input-group">
+                                <span class="lm-prefix">R$</span>
+                                <input type="text" id="lm-valor" class="lm-input" placeholder="0,00">
+                            </div>
+                        </div>
+                        <div class="lm-row"><span>Responsável</span><span id="lm-responsavel">—</span></div>
+                        <div class="lm-row"><span>Criado em</span><span id="lm-created">—</span></div>
+                        <div class="lm-row"><span>Atualizado</span><span id="lm-updated">—</span></div>
+                    </div>
+                </div>
+                <div class="lm-section lm-full" id="lm-msg-section">
+                    <div class="lm-section-title">💬 Mensagem</div>
+                    <div class="lm-msg" id="lm-msg">—</div>
+                </div>
+            </div>
+            <div class="lead-modal-footer">
+                <a id="lm-whatsapp" href="#" target="_blank" class="lm-btn lm-btn-whatsapp">💬 WhatsApp</a>
+                <button id="lm-save" class="lm-btn lm-btn-save">💾 Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="admin-script.js"></script>
+</body>
+</html>
