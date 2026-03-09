@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ELVIS VEÍCULOS — Painel Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+
+<style>
+:root {
+  --gold:#C9A84C; --gold-lt:#E8D5A3; --dark:#0D1117;
+  --panel:#161B22; --card:#1C2330; --card2:#212936; --border:#2D3748;
+  --text:#E2E8F0; --muted:#718096;
+  --success:#38A169; --danger:#E53E3E; --info:#3182CE; --warn:#D69E2E;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--panel)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ─── LOGIN ─── */
+#login-screen{position:fixed;inset:0;background:var(--dark);display:flex;align-items:center;justify-content:center;z-index:9000}
+.login-box{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:380px;text-align:center}
+.login-logo{width:56px;height:56px;background:var(--gold);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#0D1117;margin:0 auto 20px}
+.login-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--muted);margin-bottom:28px}
+.login-box input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13.5px;padding:11px 14px;margin-bottom:12px;outline:none;transition:border-color .2s}
+.login-box input:focus{border-color:var(--gold)}
+.login-box input::placeholder{color:var(--muted)}
+.btn-login{width:100%;background:var(--gold);color:#0D1117;border:none;border-radius:10px;font-weight:700;font-size:14px;padding:12px;cursor:pointer;transition:opacity .2s;margin-top:4px}
+.btn-login:hover{opacity:.88}
+.login-error{color:#FC8181;font-size:12px;margin-top:10px;display:none}
+
+/* ─── ADMIN SHELL ─── */
+#admin-screen{display:none;min-height:100vh}
+
+/* SIDEBAR */
+#sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:1000}
+.sidebar-logo{padding:24px 24px 18px;border-bottom:1px solid var(--border)}
+.sidebar-logo h1{font-family:'Playfair Display',serif;font-size:16px;color:var(--gold)}
+.sidebar-logo span{font-size:10px;color:var(--muted);display:block;margin-top:2px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:14px 0}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:12px 24px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 24px;background:transparent;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:color .2s,background .2s;text-align:left}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-item.active{color:var(--gold);background:rgba(201,168,76,.08);border-right:2px solid var(--gold)}
+.nav-item i{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{padding:16px 24px;border-top:1px solid var(--border)}
+.btn-logout{width:100%;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:12px;padding:8px;cursor:pointer;transition:color .2s,border-color .2s}
+.btn-logout:hover{color:var(--danger);border-color:var(--danger)}
+
+/* MAIN */
+#main{margin-left:240px;min-height:100vh;display:flex;flex-direction:column}
+#topbar{height:60px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:14px;position:sticky;top:0;z-index:900}
+#topbar h2{font-family:'Playfair Display',serif;font-size:17px;color:var(--text);flex:1}
+.topbar-sub{font-size:12px;color:var(--muted)}
+.topbar-badge{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:20px;font-size:11px;padding:3px 10px}
+.page-content{padding:28px}
+
+/* ─── PAGES ─── */
+.page{display:none}
+.page.active{display:block}
+
+/* ─── KPI GRID ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.kpi-card.gold::before{background:var(--gold)} .kpi-card.green::before{background:var(--success)}
+.kpi-card.blue::before{background:var(--info)}  .kpi-card.red::before{background:var(--danger)}
+.kpi-card.warn::before{background:var(--warn)}
+.kpi-icon{font-size:20px;margin-bottom:10px}
+.kpi-card.gold .kpi-icon{color:var(--gold)} .kpi-card.green .kpi-icon{color:var(--success)}
+.kpi-card.blue .kpi-icon{color:var(--info)} .kpi-card.red .kpi-icon{color:var(--danger)}
+.kpi-card.warn .kpi-icon{color:var(--warn)}
+.kpi-val{font-size:28px;font-weight:700;color:var(--text);line-height:1}
+.kpi-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ─── SECTION CARD ─── */
+.sc{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.sc-header{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+.sc-header h3{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.sc-header i{color:var(--gold);font-size:15px}
+.sc-body{padding:20px}
+
+/* ─── FORM ─── */
+.fl{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.fc,.fs{background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13.5px;padding:9px 12px;width:100%;outline:none;transition:border-color .2s,box-shadow .2s}
+.fc:focus,.fs:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+.fc::placeholder{color:var(--muted)}
+.fs option{background:var(--panel)}
+textarea.fc{resize:vertical;min-height:80px}
+.form-row{display:grid;gap:16px;margin-bottom:16px}
+.col-2{grid-template-columns:1fr 1fr}
+.col-3{grid-template-columns:1fr 1fr 1fr}
+.col-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:5px}
+.divider{height:1px;background:var(--border);margin:20px 0}
+.fsect{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:12px}
+
+/* ─── BUTTONS ─── */
+.btn-gold{background:var(--gold);color:#0D1117;border:none;border-radius:8px;font-weight:600;font-size:13px;padding:9px 18px;cursor:pointer;transition:opacity .2s,transform .1s}
+.btn-gold:hover{opacity:.88;transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:8px;font-size:13px;padding:8px 16px;cursor:pointer;transition:background .2s}
+.btn-outline:hover{background:rgba(201,168,76,.1)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:13px;padding:8px 14px;cursor:pointer;transition:color .2s,border-color .2s}
+.btn-ghost:hover{color:var(--text);border-color:var(--text)}
+.btn-danger{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:color .2s,border-color .2s}
+.btn-danger:hover{color:var(--danger);border-color:var(--danger)}
+.btn-icon{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 9px;font-size:13px;cursor:pointer;transition:color .2s,border-color .2s}
+.btn-icon:hover{color:var(--gold);border-color:var(--gold)}
+
+/* ─── TABLE ─── */
+.tbl{width:100%;border-collapse:collapse}
+.tbl thead th{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--border)}
+.tbl tbody tr{border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s}
+.tbl tbody tr:hover{background:rgba(255,255,255,.03)}
+.tbl tbody td{padding:12px 14px;font-size:13px;vertical-align:middle}
+
+/* ─── BADGES ─── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-ativo    {background:rgba(56,161,105,.15);color:#68D391;border:1px solid rgba(56,161,105,.3)}
+.badge-vendido  {background:rgba(229,62,62,.15);color:#FC8181;border:1px solid rgba(229,62,62,.3)}
+.badge-pause    {background:rgba(214,158,46,.15);color:#F6E05E;border:1px solid rgba(214,158,46,.3)}
+.badge-novo     {background:rgba(49,130,206,.15);color:#63B3ED;border:1px solid rgba(49,130,206,.3)}
+.badge-atendido {background:rgba(214,158,46,.15);color:#F6E05E;border:1px solid rgba(214,158,46,.3)}
+.badge-fechado  {background:rgba(56,161,105,.15);color:#68D391;border:1px solid rgba(56,161,105,.3)}
+.badge-perdido  {background:rgba(229,62,62,.15);color:#FC8181;border:1px solid rgba(229,62,62,.3)}
+
+/* ─── TOGGLE DESTAQUE ─── */
+.toggle-star{background:transparent;border:none;font-size:18px;cursor:pointer;transition:transform .2s;line-height:1}
+.toggle-star:hover{transform:scale(1.2)}
+
+/* ─── OPCIONAIS ─── */
+.opt-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.opt-check{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;transition:background .2s,border-color .2s,color .2s;user-select:none}
+.opt-check.checked{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.4);color:var(--gold)}
+
+/* ─── UPLOAD ZONE ─── */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--gold);background:rgba(201,168,76,.04)}
+.upload-zone i{font-size:32px;color:var(--muted);display:block;margin-bottom:8px}
+.upload-zone p{font-size:13px;color:var(--muted)}
+.photos-preview{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.photo-thumb{width:80px;height:60px;border-radius:8px;border:1px solid var(--border);overflow:hidden;position:relative}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-remove{position:absolute;top:2px;right:2px;background:rgba(229,62,62,.9);border:none;color:#fff;border-radius:4px;font-size:11px;padding:1px 5px;cursor:pointer;line-height:1.4}
+
+/* ─── DESTAQUE TOGGLE ─── */
+.destaque-toggle{display:flex;align-items:center;gap:12px}
+.toggle-switch{position:relative;width:42px;height:24px;cursor:pointer}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:12px;transition:background .3s}
+.toggle-switch input:checked + .toggle-track{background:var(--gold)}
+.toggle-thumb{position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:transform .3s}
+.toggle-switch input:checked ~ .toggle-thumb{transform:translateX(18px)}
+
+/* ─── MODAL ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--panel);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:28px;animation:popIn .25s ease}
+@keyframes popIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.modal-title button{margin-left:auto;background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+
+/* ─── TOAST ─── */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:10px;animation:slideIn .25s ease;min-width:260px;z-index:9999;transform:translateX(120%);transition:transform .3s}
+#toast.show{transform:translateX(0)}
+#toast.success{border-left:3px solid var(--success)} #toast.error{border-left:3px solid var(--danger)} #toast.info{border-left:3px solid var(--info)}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ─── LEAD CANAL ─── */
+.canal-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+
+/* CONFIG TABLE */
+.cfg-row{display:grid;grid-template-columns:180px 1fr;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-lbl{font-size:12px;color:var(--muted);font-weight:500}
+.cfg-val{font-size:13px;color:var(--text)}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;margin-bottom:16px}
+.search-bar input,.search-bar select{background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;padding:8px 12px;outline:none;transition:border-color .2s}
+.search-bar input{flex:1}
+.search-bar input:focus,.search-bar select:focus{border-color:var(--gold)}
+.search-bar select option{background:var(--panel)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">E</div>
+    <div class="login-title">Elvis Veículos</div>
+    <div class="login-sub">Painel Administrativo · InNovaIdeia</div>
+    <input type="text"     id="login-user" placeholder="Usuário" autocomplete="username"/>
+    <input type="password" id="login-pass" placeholder="Senha"   autocomplete="current-password"/>
+    <button class="btn-login" id="btn-login"><i class="bi bi-box-arrow-in-right me-1"></i>Entrar</button>
+    <div class="login-error" id="login-error">Usuário ou senha inválidos.</div>
+    <div style="margin-top:20px;font-size:11px;color:var(--muted)">admin / elvis2026</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-screen">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="bi bi-car-front-fill me-2"></i>Elvis Veículos</h1>
+      <span>Painel Administrativo</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Visão Geral</div>
+      <button class="nav-item active" data-page="dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</button>
+
+      <div class="nav-section">Estoque</div>
+      <button class="nav-item" data-page="cadastro"><i class="bi bi-plus-circle-fill"></i> Cadastrar Veículo</button>
+      <button class="nav-item" data-page="estoque"><i class="bi bi-list-ul"></i> Gerenciar Estoque</button>
+      <button class="nav-item" data-page="galeria"><i class="bi bi-images"></i> Galeria de Fotos</button>
+
+      <div class="nav-section">Comercial</div>
+      <button class="nav-item" data-page="leads"><i class="bi bi-people-fill"></i> Leads / Contatos</button>
+
+      <div class="nav-section">Sistema</div>
+      <button class="nav-item" data-action="site"><i class="bi bi-box-arrow-up-right"></i> Ver Site</button>
+      <button class="nav-item" data-page="config"><i class="bi bi-sliders"></i> Configurações</button>
+    </div>
+    <div class="sidebar-footer">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px" id="topbar-date"></div>
+      <button class="btn-logout" id="btn-logout"><i class="bi bi-box-arrow-left me-1"></i>Sair</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div id="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <span class="topbar-sub" id="page-sub">Visão geral do estoque e leads</span>
+      <button class="btn-gold" id="btn-new-veiculo" style="margin-left:auto"><i class="bi bi-plus-lg me-1"></i>Novo Veículo</button>
+    </div>
+
+    <div class="page-content">
+
+      <!-- ════ DASHBOARD ════ -->
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi-card gold"><div class="kpi-icon"><i class="bi bi-car-front-fill"></i></div><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Total no Estoque</div></div>
+          <div class="kpi-card green"><div class="kpi-icon"><i class="bi bi-check-circle-fill"></i></div><div class="kpi-val" id="kpi-ativos">0</div><div class="kpi-lbl">Ativos</div></div>
+          <div class="kpi-card warn"><div class="kpi-icon"><i class="bi bi-pause-circle-fill"></i></div><div class="kpi-val" id="kpi-pausados">0</div><div class="kpi-lbl">Pausados</div></div>
+          <div class="kpi-card red"><div class="kpi-icon"><i class="bi bi-x-circle-fill"></i></div><div class="kpi-val" id="kpi-vendidos">0</div><div class="kpi-lbl">Vendidos</div></div>
+          <div class="kpi-card blue"><div class="kpi-icon"><i class="bi bi-people-fill"></i></div><div class="kpi-val" id="kpi-leads">0</div><div class="kpi-lbl">Leads Ativos</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="sc">
+            <div class="sc-header"><i class="bi bi-star-fill"></i><h3>Veículo em Destaque</h3></div>
+            <div class="sc-body" id="dash-destaque"></div>
+          </div>
+          <div class="sc">
+            <div class="sc-header"><i class="bi bi-people-fill"></i><h3>Últimos Leads</h3></div>
+            <div class="sc-body p-0">
+              <table class="tbl"><thead><tr><th>Nome</th><th>Veículo</th><th>Status</th></tr></thead>
+              <tbody id="dash-leads-tbody"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ CADASTRO ════ -->
+      <div class="page" id="page-cadastro">
+        <div class="sc">
+          <div class="sc-header"><i class="bi bi-plus-circle-fill"></i><h3 id="form-title">Novo Veículo</h3></div>
+          <div class="sc-body">
+            <div class="fsect">Identificação</div>
+            <div class="form-row col-3">
+              <div class="fg"><label class="fl">Marca *</label><input class="fc" id="f-marca" placeholder="Ex: Hyundai"></div>
+              <div class="fg"><label class="fl">Modelo *</label><input class="fc" id="f-modelo" placeholder="Ex: Azera"></div>
+              <div class="fg"><label class="fl">Versão</label><input class="fc" id="f-versao" placeholder="Ex: 3.0 V6 GLS"></div>
+            </div>
+            <div class="form-row col-4">
+              <div class="fg"><label class="fl">Ano Fab.</label><input class="fc" id="f-anofab" placeholder="2020" maxlength="4"></div>
+              <div class="fg"><label class="fl">Ano Mod.</label><input class="fc" id="f-anomod" placeholder="2021" maxlength="4"></div>
+              <div class="fg"><label class="fl">Cor</label><input class="fc" id="f-cor" placeholder="Prata"></div>
+              <div class="fg"><label class="fl">Final da Placa</label><input class="fc" id="f-placa" placeholder="3" maxlength="1"></div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="fsect">Especificações</div>
+            <div class="form-row col-4">
+              <div class="fg"><label class="fl">Câmbio</label>
+                <select class="fs" id="f-cambio"><option>Automático</option><option>Manual</option></select></div>
+              <div class="fg"><label class="fl">Combustível</label>
+                <select class="fs" id="f-combust"><option>Flex</option><option>Gasolina</option><option>Etanol</option><option>Diesel</option><option>Elétrico</option><option>Híbrido</option></select></div>
+              <div class="fg"><label class="fl">Motor</label><input class="fc" id="f-motor" placeholder="2.0 16v"></div>
+              <div class="fg"><label class="fl">Portas</label>
+                <select class="fs" id="f-portas"><option value="4">4 Portas</option><option value="2">2 Portas</option></select></div>
+            </div>
+            <div class="form-row col-3">
+              <div class="fg"><label class="fl">Quilometragem *</label><input class="fc" id="f-km" placeholder="75.000"></div>
+              <div class="fg"><label class="fl">Preço *</label><input class="fc" id="f-preco" placeholder="64.990"></div>
+              <div class="fg"><label class="fl">Tabela FIPE</label><input class="fc" id="f-fipe" placeholder="68.000"></div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="fsect">Status e Destaque</div>
+            <div class="form-row col-2">
+              <div class="fg"><label class="fl">Status</label>
+                <select class="fs" id="f-status"><option value="ativo">Ativo</option><option value="pause">Pausado</option><option value="vendido">Vendido</option></select></div>
+              <div class="fg"><label class="fl">Destaque na Vitrine</label>
+                <div class="destaque-toggle" style="margin-top:8px">
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="f-destaque">
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                  </label>
+                  <span id="destaque-label" style="font-size:13px;color:var(--muted)">Não destacado</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="fsect">Opcionais</div>
+            <div class="opt-grid" id="opt-grid"></div>
+
+            <div class="divider"></div>
+            <div class="fsect">Fotos do Veículo</div>
+            <div class="upload-zone" id="upload-zone">
+              <i class="bi bi-cloud-arrow-up"></i>
+              <p>Arraste fotos aqui ou <strong style="color:var(--gold)">clique para selecionar</strong></p>
+              <p style="font-size:11px;margin-top:4px">JPG, PNG, WebP — Máx. 5MB por foto</p>
+            </div>
+            <input type="file" id="file-input" accept="image/*" multiple style="display:none">
+            <div class="photos-preview" id="photos-preview"></div>
+
+            <div style="display:flex;gap:10px;margin-top:24px">
+              <button class="btn-gold" id="btn-salvar"><i class="bi bi-check-lg me-1"></i>Salvar Veículo</button>
+              <button class="btn-ghost" id="btn-limpar"><i class="bi bi-arrow-counterclockwise me-1"></i>Limpar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ ESTOQUE ════ -->
+      <div class="page" id="page-estoque">
+        <div class="sc">
+          <div class="sc-header"><i class="bi bi-list-ul"></i><h3>Estoque Completo</h3></div>
+          <div class="sc-body">
+            <div class="search-bar">
+              <input id="search-estoque" placeholder="Buscar marca, modelo..."/>
+              <select id="filter-status-estoque">
+                <option value="">Todos os status</option>
+                <option value="ativo">Ativos</option>
+                <option value="pause">Pausados</option>
+                <option value="vendido">Vendidos</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr>
+                <th>⭐</th><th>Veículo</th><th>Versão</th><th>Ano</th><th>Km</th>
+                <th>Preço</th><th>FIPE</th><th>Status</th><th>Ações</th>
+              </tr></thead>
+              <tbody id="estoque-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ GALERIA ════ -->
+      <div class="page" id="page-galeria">
+        <div class="sc">
+          <div class="sc-header"><i class="bi bi-images"></i><h3>Galeria de Fotos</h3></div>
+          <div class="sc-body" id="galeria-body">
+            <p style="color:var(--muted)">Selecione um veículo para gerenciar fotos.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ LEADS ════ -->
+      <div class="page" id="page-leads">
+        <div class="sc">
+          <div class="sc-header"><i class="bi bi-people-fill"></i><h3>Leads & Contatos</h3>
+            <button class="btn-gold" id="btn-add-lead" style="margin-left:auto;font-size:12px;padding:7px 14px"><i class="bi bi-plus-lg me-1"></i>Novo Lead</button>
+          </div>
+          <div class="sc-body">
+            <div class="search-bar">
+              <select id="filter-lead-status" style="width:180px">
+                <option value="">Todos os status</option>
+                <option value="novo">Novo</option>
+                <option value="atendido">Atendido</option>
+                <option value="fechado">Fechado</option>
+                <option value="perdido">Perdido</option>
+              </select>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th>Nome</th><th>Telefone</th><th>Veículo</th><th>Canal</th><th>Data</th><th>Obs</th><th>Status</th><th></th></tr></thead>
+              <tbody id="leads-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ CONFIG ════ -->
+      <div class="page" id="page-config">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="sc">
+            <div class="sc-header"><i class="bi bi-shop"></i><h3>Dados da Loja</h3></div>
+            <div class="sc-body">
+              <div class="form-row"><div class="fg"><label class="fl">Nome da Loja</label><input class="fc" id="cfg-nome"></div></div>
+              <div class="form-row"><div class="fg"><label class="fl">Endereço</label><input class="fc" id="cfg-endereco"></div></div>
+              <div class="form-row"><div class="fg"><label class="fl">Horário de Funcionamento</label><input class="fc" id="cfg-horario"></div></div>
+              <div class="form-row"><div class="fg"><label class="fl">E-mail</label><input class="fc" id="cfg-email"></div></div>
+              <div class="form-row"><div class="fg"><label class="fl">Texto do Rodapé</label><input class="fc" id="cfg-footer"></div></div>
+            </div>
+          </div>
+          <div class="sc">
+            <div class="sc-header"><i class="bi bi-whatsapp"></i><h3>WhatsApp</h3></div>
+            <div class="sc-body">
+              <div class="form-row"><div class="fg"><label class="fl">Número WhatsApp (com DDI)</label><input class="fc" id="cfg-wpp" placeholder="5511999999999"></div></div>
+              <div class="form-row"><div class="fg"><label class="fl">Mensagem padrão</label><textarea class="fc" id="cfg-wpp-msg" rows="3"></textarea></div></div>
+              <div class="form-row"><div class="fg"><label class="fl">Badge (notificações)</label><input class="fc" id="cfg-wpp-badge" type="number" min="0" max="99"></div></div>
+              <div style="margin-top:8px;padding:12px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:8px;font-size:12px;color:var(--muted)" id="wpp-preview"></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn-gold" id="btn-save-config"><i class="bi bi-check-lg me-1"></i>Salvar Configurações</button>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main -->
+
+</div><!-- /admin-screen -->
+
+<!-- MODAL LEAD -->
+<div class="modal-overlay" id="lead-modal">
+  <div class="modal-box">
+    <div class="modal-title"><i class="bi bi-person-plus-fill"></i> <span id="lead-modal-title">Novo Lead</span>
+      <button id="lead-cancel"><i class="bi bi-x-lg"></i></button></div>
+    <div class="form-row col-2">
+      <div class="fg"><label class="fl">Nome *</label><input class="fc" id="lead-nome" required></div>
+      <div class="fg"><label class="fl">Telefone</label><input class="fc" id="lead-tel" placeholder="(11) 99999-0000"></div>
+    </div>
+    <div class="form-row col-2">
+      <div class="fg"><label class="fl">E-mail</label><input class="fc" id="lead-email" type="email"></div>
+      <div class="fg"><label class="fl">Veículo de Interesse</label><input class="fc" id="lead-veiculo"></div>
+    </div>
+    <div class="form-row col-2">
+      <div class="fg"><label class="fl">Canal</label>
+        <select class="fs" id="lead-canal">
+          <option value="whatsapp">💬 WhatsApp</option>
+          <option value="telefone">📞 Telefone</option>
+          <option value="site">🌐 Formulário Site</option>
+          <option value="email">✉️ E-mail</option>
+          <option value="presencial">🏢 Presencial</option>
+        </select></div>
+      <div class="fg"><label class="fl">Status</label>
+        <select class="fs" id="lead-status">
+          <option value="novo">Novo</option>
+          <option value="atendido">Atendido</option>
+          <option value="fechado">Fechado</option>
+          <option value="perdido">Perdido</option>
+        </select></div>
+    </div>
+    <div class="fg"><label class="fl">Observações</label><textarea class="fc" id="lead-obs" rows="2"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="lead-cancel2">Cancelar</button>
+      <button class="btn-gold" id="lead-save"><i class="bi bi-check-lg me-1"></i>Salvar Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span id="toast-icon" style="font-size:18px"></span>
+  <div><div id="toast-text" style="font-weight:600"></div><div id="toast-sub" style="font-size:11px;color:var(--muted);margin-top:2px"></div></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   ELVIS VEÍCULOS — ADMIN PANEL
+   ════════════════════════════════════════════ */
+const STORAGE_KEY = 'elvis_vehicles';
+const LEADS_KEY   = 'elvis_leads';
+const CONFIG_KEY  = 'elvis_config';
+
+const OPTIONALS = [
+  'Ar Cond. Digital','Bancos em Couro','GPS de Fábrica','Som Premium','Teto Solar',
+  'Faróis de Neblina','Alarme','Rodas Aro 17','Câmera de Ré','Sensor de Ré',
+  'Partida Elétrica','Vidros Elétricos','Banco Elétrico','Multimídia','Chuva/Luz Auto',
+  'Freios ABS','Controle de Tração','Piloto Automático','Tração 4x4','Ar Cond. Bi-zona',
+  'Volante Multifuncional','Kit Xenon','Carregador por Indução'
+];
+
+let vehicles=[], leads=[], config={}, nextId=1, nextLeadId=1, uploadedPhotos=[], editingId=null;
+
+/* ── Utilitários ── */
+const $ = id => document.getElementById(id);
+let toastTimer;
+function toast(icon, text, sub='', type='info') {
+  $('toast-icon').textContent = icon;
+  $('toast-text').textContent = text;
+  $('toast-sub').textContent  = sub;
+  const t = $('toast');
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 3500);
+}
+
+function badgeHtml(s) {
+  const map = {ativo:'badge-ativo',vendido:'badge-vendido',pause:'badge-pause'};
+  const lbl = {ativo:'✅ Ativo',vendido:'❌ Vendido',pause:'⏸ Pausado'};
+  return `<span class="badge ${map[s]||'badge-pause'}">${lbl[s]||s}</span>`;
+}
+function leadBadge(s) {
+  const map = {novo:'badge-novo',atendido:'badge-atendido',fechado:'badge-fechado',perdido:'badge-perdido'};
+  const lbl = {novo:'🔵 Novo',atendido:'🟡 Atendido',fechado:'🟢 Fechado',perdido:'🔴 Perdido'};
+  return `<span class="badge ${map[s]}">${lbl[s]||s}</span>`;
+}
+function timeAgo(ts) {
+  const d = Date.now()-ts;
+  if (d<60000) return 'agora mesmo';
+  if (d<3600000) return `há ${Math.floor(d/60000)}min`;
+  if (d<86400000) return `há ${Math.floor(d/3600000)}h`;
+  return `há ${Math.floor(d/86400000)}d`;
+}
+
+/* ── Persistência ── */
+function saveVehicles() { localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles)); }
+function saveLeads()    { localStorage.setItem(LEADS_KEY,   JSON.stringify(leads)); }
+function saveConfig()   { localStorage.setItem(CONFIG_KEY,  JSON.stringify(config)); }
+
+function loadAll() {
+  try { const s = localStorage.getItem(STORAGE_KEY); vehicles = s ? JSON.parse(s) : getDefaultVehicles(); nextId = vehicles.length ? Math.max(...vehicles.map(v=>v.id))+1 : 1; } catch(e) { vehicles = getDefaultVehicles(); }
+  try { const s = localStorage.getItem(LEADS_KEY);   leads    = s ? JSON.parse(s) : getDefaultLeads();   nextLeadId = leads.length ? Math.max(...leads.map(l=>l.id))+1 : 1; } catch(e) { leads = getDefaultLeads(); }
+  try { const s = localStorage.getItem(CONFIG_KEY);  config   = s ? JSON.parse(s) : getDefaultConfig(); } catch(e) { config = getDefaultConfig(); }
+}
+
+function getDefaultVehicles() {
+  return [
+    {id:1,marca:'Hyundai',modelo:'Azera',versao:'3.0 V6 GLS',anoFab:'2011',anoMod:'2012',preco:'74.990',km:'98.000',cor:'Prata',cambio:'Automático',combustivel:'Gasolina',finalPlaca:'3',portas:'4',motor:'3.0 V6 270cv',fipe:'79.100',status:'ativo',destaque:true,optionals:['Ar Cond. Digital','Bancos em Couro','GPS de Fábrica','Teto Solar','Som Premium'],photos:[]},
+    {id:2,marca:'Hyundai',modelo:'Tucson',versao:'2.0 GLS',anoFab:'2014',anoMod:'2015',preco:'64.990',km:'72.000',cor:'Branco',cambio:'Automático',combustivel:'Flex',finalPlaca:'5',portas:'4',motor:'2.0 16v',fipe:'68.000',status:'ativo',destaque:false,optionals:['Ar Cond. Digital','Câmera de Ré'],photos:[]},
+    {id:3,marca:'Toyota',modelo:'Corolla',versao:'2.0 XEI',anoFab:'2018',anoMod:'2019',preco:'89.900',km:'55.000',cor:'Preto',cambio:'Automático',combustivel:'Flex',finalPlaca:'7',portas:'4',motor:'2.0 Flex',fipe:'92.000',status:'ativo',destaque:false,optionals:['GPS de Fábrica','Alarme'],photos:[]},
+    {id:4,marca:'Volkswagen',modelo:'Jetta',versao:'2.0 TSI',anoFab:'2017',anoMod:'2017',preco:'78.500',km:'68.000',cor:'Cinza',cambio:'Automático',combustivel:'Gasolina',finalPlaca:'2',portas:'4',motor:'2.0 Turbo',fipe:'81.000',status:'pause',destaque:false,optionals:['Bancos em Couro'],photos:[]}
+  ];
+}
+function getDefaultLeads() {
+  return [
+    {id:1,nome:'João Souza',tel:'(11) 99999-1111',email:'joao@email.com',veiculo:'Hyundai Azera',canal:'whatsapp',status:'novo',ts:Date.now()-600000,obs:'Perguntou sobre financiamento'},
+    {id:2,nome:'Maria Lima',tel:'(11) 98888-2222',email:'maria@email.com',veiculo:'Toyota Corolla',canal:'site',status:'atendido',ts:Date.now()-3600000,obs:'Agendou visita para amanhã'}
+  ];
+}
+function getDefaultConfig() {
+  return {nome:'Elvis Veículos',endereco:'Rua Principal, 123 — Sua Cidade/SP',horario:'Seg–Sex: 9h às 18h | Sab: 9h às 13h',email:'contato@elvisveiculos.com.br',wpp:'5511999999999',wppMsg:'Olá! Vim pelo site da Elvis Veículos.',wppBadge:'3',footer:'© 2026 Elvis Veículos — Todos os direitos reservados'};
+}
+
+/* ── LOGIN ── */
+function doLogin() {
+  const u = $('login-user').value.trim(), p = $('login-pass').value;
+  if (u==='admin' && p==='elvis2026') {
+    $('login-screen').style.display = 'none';
+    $('admin-screen').style.display = 'block';
+    initAdmin();
+  } else {
+    const err = $('login-error');
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+/* ── INIT ── */
+function initAdmin() {
+  $('topbar-date').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  buildOptionals();
+  fillConfig();
+  updateWppPreview();
+  renderDashboard();
+  renderEstoque();
+  renderLeads();
+}
+
+/* ── NAVEGAÇÃO ── */
+const pageTitles = {
+  dashboard:['Dashboard','Visão geral do estoque e leads'],
+  cadastro: ['Cadastrar Veículo','Preencha os dados do novo veículo'],
+  estoque:  ['Estoque','Gerencie todos os veículos cadastrados'],
+  galeria:  ['Galeria de Fotos','Fotos organizadas por veículo'],
+  leads:    ['Leads / Contatos','Gerencie clientes e oportunidades'],
+  config:   ['Configurações','Dados da loja e WhatsApp']
+};
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = $('page-'+page);
+  if (el) el.classList.add('active');
+  const cfg = pageTitles[page] || [page, ''];
+  $('page-title').textContent = cfg[0];
+  $('page-sub').textContent   = cfg[1];
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.dataset.page === page) n.classList.add('active');
+  });
+  if (page==='dashboard') { renderDashboard(); }
+  if (page==='estoque')   { renderEstoque(); }
+  if (page==='galeria')   { renderGaleria(); }
+  if (page==='leads')     { renderLeads(); }
+}
+
+/* ── DASHBOARD ── */
+function renderDashboard() {
+  $('kpi-total').textContent   = vehicles.length;
+  $('kpi-ativos').textContent  = vehicles.filter(v=>v.status==='ativo').length;
+  $('kpi-pausados').textContent= vehicles.filter(v=>v.status==='pause').length;
+  $('kpi-vendidos').textContent= vehicles.filter(v=>v.status==='vendido').length;
+  $('kpi-leads').textContent   = leads.filter(l=>l.status==='novo'||l.status==='atendido').length;
+
+  const dest = vehicles.find(v=>v.destaque) || vehicles[0];
+  $('dash-destaque').innerHTML = dest ? `
+    <div style="font-size:36px;text-align:center;padding:12px">${dest.photos&&dest.photos.length?`<img src="${dest.photos[0]}" style="width:100%;height:100px;object-fit:cover;border-radius:8px">`:'🚗'}</div>
+    <div style="font-weight:700;font-size:16px;color:var(--gold)">${dest.marca} ${dest.modelo}</div>
+    <div style="color:var(--muted);font-size:12px;margin:4px 0">${dest.versao||''} · ${dest.anoFab}/${dest.anoMod}</div>
+    <div style="font-size:18px;font-weight:700;color:var(--text);margin-top:8px">R$ ${dest.preco}</div>
+  ` : '<p style="color:var(--muted)">Nenhum destaque definido.</p>';
+
+  $('dash-leads-tbody').innerHTML = leads.slice(-5).reverse().map(l => `<tr>
+    <td><strong>${l.nome}</strong></td>
+    <td style="color:var(--muted);font-size:12px">${l.veiculo||'—'}</td>
+    <td>${leadBadge(l.status)}</td>
+  </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px">Sem leads</td></tr>';
+}
+
+/* ── OPCIONAIS ── */
+function buildOptionals() {
+  $('opt-grid').innerHTML = OPTIONALS.map(o =>
+    `<div class="opt-check" data-opt="${o}">${o}</div>`
+  ).join('');
+  $('opt-grid').addEventListener('click', e => {
+    const el = e.target.closest('.opt-check');
+    if (el) el.classList.toggle('checked');
+  });
+}
+
+/* ── FOTOS ── */
+function handleFiles(files) {
+  [...files].forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => { uploadedPhotos.push(e.target.result); renderPhotos(); };
+    reader.readAsDataURL(file);
+  });
+}
+function renderPhotos() {
+  $('photos-preview').innerHTML = uploadedPhotos.map((p,i) => `
+    <div class="photo-thumb">
+      <img src="${p}" alt="foto ${i+1}">
+      <button class="photo-remove" data-rm="${i}">✕</button>
+    </div>`).join('');
+}
+
+/* ── CADASTRO / EDIÇÃO ── */
+function resetForm() {
+  ['f-marca','f-modelo','f-versao','f-anofab','f-anomod','f-cor','f-placa','f-motor','f-km','f-preco','f-fipe'].forEach(id => $(id).value = '');
+  $('f-cambio').value = 'Automático';
+  $('f-combust').value = 'Flex';
+  $('f-portas').value = '4';
+  $('f-status').value = 'ativo';
+  $('f-destaque').checked = false;
+  $('destaque-label').textContent = 'Não destacado';
+  document.querySelectorAll('.opt-check').forEach(el => el.classList.remove('checked'));
+  uploadedPhotos = [];
+  renderPhotos();
+  editingId = null;
+  $('form-title').textContent = 'Novo Veículo';
+  $('file-input').value = '';
+}
+
+function saveVehicle() {
+  const marca  = $('f-marca').value.trim();
+  const modelo = $('f-modelo').value.trim();
+  const km     = $('f-km').value.trim();
+  const preco  = $('f-preco').value.trim();
+  if (!marca || !modelo || !km || !preco) { toast('⚠️','Campos obrigatórios!','Marca, Modelo, Km e Preço são obrigatórios.','error'); return; }
+
+  const optionals = [...document.querySelectorAll('.opt-check.checked')].map(el => el.dataset.opt);
+  const isDestaque = $('f-destaque').checked;
+
+  if (isDestaque) vehicles.forEach(v => { v.destaque = false; });
+
+  const payload = {
+    id: editingId || nextId++,
+    marca, modelo,
+    versao: $('f-versao').value.trim(),
+    anoFab: $('f-anofab').value.trim(),
+    anoMod: $('f-anomod').value.trim(),
+    cor: $('f-cor').value.trim(),
+    finalPlaca: $('f-placa').value.trim(),
+    cambio: $('f-cambio').value,
+    combustivel: $('f-combust').value,
+    motor: $('f-motor').value.trim(),
+    portas: $('f-portas').value,
+    km, preco,
+    fipe: $('f-fipe').value.trim(),
+    status: $('f-status').value,
+    destaque: isDestaque,
+    optionals,
+    photos: uploadedPhotos.slice()
+  };
+
+  if (editingId) {
+    const idx = vehicles.findIndex(v => v.id === editingId);
+    if (idx !== -1) vehicles[idx] = payload;
+    toast('✅',`${marca} ${modelo} atualizado!`,'','success');
+  } else {
+    vehicles.push(payload);
+    toast('✅',`${marca} ${modelo} cadastrado!`,'','success');
+  }
+
+  saveVehicles();
+  resetForm();
+  renderDashboard();
+}
+
+function editVehicle(id) {
+  const v = vehicles.find(x => x.id === id);
+  if (!v) return;
+  editingId = id;
+  $('form-title').textContent = `Editando: ${v.marca} ${v.modelo}`;
+  $('f-marca').value   = v.marca;
+  $('f-modelo').value  = v.modelo;
+  $('f-versao').value  = v.versao||'';
+  $('f-anofab').value  = v.anoFab||'';
+  $('f-anomod').value  = v.anoMod||'';
+  $('f-cor').value     = v.cor||'';
+  $('f-placa').value   = v.finalPlaca||'';
+  $('f-cambio').value  = v.cambio||'Automático';
+  $('f-combust').value = v.combustivel||'Flex';
+  $('f-motor').value   = v.motor||'';
+  $('f-portas').value  = v.portas||'4';
+  $('f-km').value      = v.km||'';
+  $('f-preco').value   = v.preco||'';
+  $('f-fipe').value    = v.fipe||'';
+  $('f-status').value  = v.status||'ativo';
+  $('f-destaque').checked = !!v.destaque;
+  $('destaque-label').textContent = v.destaque ? 'Em destaque' : 'Não destacado';
+  document.querySelectorAll('.opt-check').forEach(el => {
+    el.classList.toggle('checked', (v.optionals||[]).includes(el.dataset.opt));
+  });
+  uploadedPhotos = (v.photos||[]).slice();
+  renderPhotos();
+  showPage('cadastro');
+}
+
+/* ── ESTOQUE ── */
+function renderEstoque(search='', statusFilter='') {
+  let list = vehicles.filter(v => {
+    if (statusFilter && v.status !== statusFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return (v.marca+v.modelo+v.versao).toLowerCase().includes(q);
+    }
+    return true;
+  });
+  $('estoque-list').innerHTML = list.map(v => `<tr>
+    <td><button class="toggle-star" data-destaque="${v.id}" title="${v.destaque?'Remover destaque':'Definir como destaque'}">${v.destaque?'⭐':'☆'}</button></td>
+    <td><strong>${v.marca} ${v.modelo}</strong></td>
+    <td style="color:var(--muted);font-size:12px">${v.versao||'—'}</td>
+    <td>${v.anoFab||''}/${v.anoMod||''}</td>
+    <td>${v.km||'—'} km</td>
+    <td style="color:var(--gold);font-weight:600">R$ ${v.preco||'—'}</td>
+    <td style="color:var(--muted)">R$ ${v.fipe||'—'}</td>
+    <td>${badgeHtml(v.status)}</td>
+    <td>
+      <button class="btn-icon" data-edit="${v.id}" title="Editar"><i class="bi bi-pencil-fill"></i></button>
+      <button class="btn-icon" data-toggle="${v.id}" title="Pausar/Ativar" style="margin:0 4px"><i class="bi bi-arrow-repeat"></i></button>
+      <button class="btn-danger" data-del="${v.id}" title="Excluir"><i class="bi bi-trash3-fill"></i></button>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px">Nenhum veículo encontrado</td></tr>';
+}
+
+/* ── GALERIA ── */
+function renderGaleria() {
+  $('galeria-body').innerHTML = `
+    <div style="margin-bottom:16px"><label class="fl">Selecione o Veículo</label>
+      <select class="fs" id="gal-select" style="max-width:300px;margin-top:5px">
+        <option value="">Escolha um veículo</option>
+        ${vehicles.map(v => `<option value="${v.id}">${v.marca} ${v.modelo} (${v.anoFab}/${v.anoMod})</option>`).join('')}
+      </select>
+    </div>
+    <div id="gal-content" style="color:var(--muted)">Nenhum veículo selecionado.</div>`;
+  $('gal-select').addEventListener('change', e => {
+    const v = vehicles.find(x => x.id === +e.target.value);
+    if (!v) { $('gal-content').innerHTML = ''; return; }
+    const photos = v.photos||[];
+    $('gal-content').innerHTML = `
+      <div style="margin-bottom:12px;font-size:13px;color:var(--muted)">${photos.length} foto(s)</div>
+      <div class="photos-preview" id="gal-thumbs">
+        ${photos.map((p,i) => `<div class="photo-thumb"><img src="${p}"><button class="photo-remove" data-gal-rm="${i}">✕</button></div>`).join('')}
+      </div>
+      ${photos.length===0?'<p style="color:var(--muted)">Sem fotos. Edite o veículo para adicionar.</p>':''}`;
+    document.querySelectorAll('[data-gal-rm]').forEach(btn =>
+      btn.addEventListener('click', () => {
+        v.photos.splice(+btn.dataset.galRm, 1);
+        saveVehicles();
+        renderGaleria();
+        $('gal-select').value = v.id;
+        $('gal-select').dispatchEvent(new Event('change'));
+        toast('🗑️','Foto removida.','','info');
+      }));
+  });
+}
+
+/* ── LEADS ── */
+function renderLeads(filter='') {
+  const list = filter ? leads.filter(l => l.status===filter) : leads;
+  $('leads-list').innerHTML = list.map(l => `<tr>
+    <td><strong>${l.nome}</strong></td>
+    <td>${l.tel||'—'}</td>
+    <td style="color:var(--muted)">${l.veiculo||'—'}</td>
+    <td><span class="canal-badge">${l.canal||'—'}</span></td>
+    <td style="color:var(--muted);font-size:12px">${timeAgo(l.ts)}</td>
+    <td style="color:var(--muted);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.obs||'—'}</td>
+    <td>
+      <select class="fs" data-lead-status="${l.id}" style="padding:4px 8px;font-size:12px;width:130px">
+        <option value="novo"     ${l.status==='novo'    ?'selected':''}>🔵 Novo</option>
+        <option value="atendido" ${l.status==='atendido'?'selected':''}>🟡 Atendido</option>
+        <option value="fechado"  ${l.status==='fechado' ?'selected':''}>🟢 Fechado</option>
+        <option value="perdido"  ${l.status==='perdido' ?'selected':''}>🔴 Perdido</option>
+      </select>
+    </td>
+    <td>
+      <button class="btn-danger" data-del-lead="${l.id}"><i class="bi bi-trash3-fill"></i></button>
+    </td>
+  </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px">Sem leads</td></tr>';
+}
+
+function openLeadModal(id=null) {
+  ['lead-nome','lead-tel','lead-email','lead-veiculo','lead-obs'].forEach(x => $(x).value='');
+  $('lead-canal').value='whatsapp'; $('lead-status').value='novo';
+  $('lead-modal-title').textContent = id ? 'Editar Lead' : 'Novo Lead';
+  $('lead-modal').classList.add('show');
+}
+function closeLeadModal() { $('lead-modal').classList.remove('show'); }
+function saveLead() {
+  const nome = $('lead-nome').value.trim();
+  if (!nome) { toast('⚠️','Nome obrigatório!','','error'); return; }
+  leads.push({ id:nextLeadId++, nome, tel:$('lead-tel').value, email:$('lead-email').value, veiculo:$('lead-veiculo').value, canal:$('lead-canal').value, status:$('lead-status').value, obs:$('lead-obs').value, ts:Date.now() });
+  saveLeads();
+  closeLeadModal();
+  renderLeads($('filter-lead-status').value);
+  renderDashboard();
+  toast('✅',`Lead de ${nome} salvo!`,'','success');
+}
+
+/* ── CONFIG ── */
+function fillConfig() {
+  $('cfg-nome').value     = config.nome||'';
+  $('cfg-endereco').value = config.endereco||'';
+  $('cfg-horario').value  = config.horario||'';
+  $('cfg-email').value    = config.email||'';
+  $('cfg-footer').value   = config.footer||'';
+  $('cfg-wpp').value      = config.wpp||'';
+  $('cfg-wpp-msg').value  = config.wppMsg||'';
+  $('cfg-wpp-badge').value= config.wppBadge||'3';
+}
+function updateWppPreview() {
+  const num = ($('cfg-wpp').value||'').replace(/\D/g,'');
+  const msg = $('cfg-wpp-msg').value||'';
+  $('wpp-preview').innerHTML = num
+    ? `🔗 <a href="https://wa.me/${num}?text=${encodeURIComponent(msg)}" target="_blank" style="color:var(--gold)">Testar link WhatsApp</a>`
+    : '⚠️ Informe o número para gerar o link.';
+}
+function doSaveConfig() {
+  config = {
+    nome: $('cfg-nome').value, endereco:$('cfg-endereco').value,
+    horario:$('cfg-horario').value, email:$('cfg-email').value,
+    footer:$('cfg-footer').value,
+    wpp:$('cfg-wpp').value, wppMsg:$('cfg-wpp-msg').value,
+    wppBadge:$('cfg-wpp-badge').value
+  };
+  saveConfig();
+  toast('✅','Configurações salvas!','Site atualizado automaticamente.','success');
+}
+
+/* ── DESTAQUE TOGGLE LABEL ── */
+function setupDestaqueToggle() {
+  $('f-destaque').addEventListener('change', e =>
+    $('destaque-label').textContent = e.target.checked ? 'Em destaque ⭐' : 'Não destacado');
+}
+
+/* ── EVENTS ── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadAll();
+
+  $('btn-login').addEventListener('click', doLogin);
+  $('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  $('btn-logout').addEventListener('click', () => {
+    $('admin-screen').style.display='none';
+    $('login-screen').style.display='flex';
+    $('login-user').value=''; $('login-pass').value='';
+  });
+
+  // Navegação sidebar
+  document.querySelectorAll('.nav-item').forEach(item =>
+    item.addEventListener('click', () => {
+      const p = item.dataset.page, a = item.dataset.action;
+      if (p) showPage(p);
+      else if (a==='site') window.open('elvis_index.html','_blank');
+    }));
+
+  $('btn-new-veiculo').addEventListener('click', () => { resetForm(); showPage('cadastro'); });
+
+  // Upload
+  $('btn-upload') && $('btn-upload').addEventListener('click', () => $('file-input').click());
+  $('upload-zone').addEventListener('click', () => $('file-input').click());
+  $('file-input').addEventListener('change', e => handleFiles(e.target.files));
+  const zone = $('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+  $('photos-preview').addEventListener('click', e => {
+    const btn = e.target.closest('.photo-remove');
+    if (!btn) return;
+    uploadedPhotos.splice(+btn.dataset.rm,1); renderPhotos();
+  });
+
+  // Salvar/limpar
+  $('btn-salvar').addEventListener('click', saveVehicle);
+  $('btn-limpar').addEventListener('click', resetForm);
+
+  // Estoque
+  $('search-estoque').addEventListener('input', e => renderEstoque(e.target.value, $('filter-status-estoque').value));
+  $('filter-status-estoque').addEventListener('change', e => renderEstoque($('search-estoque').value, e.target.value));
+  $('estoque-list').addEventListener('click', e => {
+    const destBtn = e.target.closest('[data-destaque]');
+    if (destBtn) {
+      const id = +destBtn.dataset.destaque;
+      const v  = vehicles.find(x=>x.id===id);
+      if (v) {
+        const set = !v.destaque;
+        vehicles.forEach(x => x.destaque=false);
+        v.destaque = set;
+        saveVehicles(); renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
+        toast(set?'⭐':'☆', set?`${v.marca} ${v.modelo} em destaque!`:'Destaque removido.','','info');
+      } return;
+    }
+    const toggleBtn = e.target.closest('[data-toggle]');
+    if (toggleBtn) {
+      const v = vehicles.find(x=>x.id===+toggleBtn.dataset.toggle);
+      if (v) { v.status = v.status==='ativo'?'pause':'ativo'; saveVehicles(); renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard(); toast('✅',`${v.marca} ${v.modelo}: ${v.status==='ativo'?'Ativo':'Pausado'}`,'',"info"); } return;
+    }
+    const editBtn = e.target.closest('[data-edit]');
+    if (editBtn) { editVehicle(+editBtn.dataset.edit); return; }
+    const delBtn = e.target.closest('[data-del]');
+    if (delBtn) {
+      const v = vehicles.find(x=>x.id===+delBtn.dataset.del);
+      if (v && confirm(`Remover ${v.marca} ${v.modelo}?`)) {
+        vehicles = vehicles.filter(x=>x.id!==v.id); saveVehicles();
+        renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
+        toast('🗑️',`${v.marca} ${v.modelo} removido.`,'',"info");
+      }
+    }
+  });
+
+  // Leads
+  $('btn-add-lead').addEventListener('click', () => openLeadModal());
+  $('lead-cancel').addEventListener('click', closeLeadModal);
+  $('lead-cancel2').addEventListener('click', closeLeadModal);
+  $('lead-modal').addEventListener('click', e => { if(e.target===$('lead-modal')) closeLeadModal(); });
+  $('lead-save').addEventListener('click', saveLead);
+  $('filter-lead-status').addEventListener('change', e => renderLeads(e.target.value));
+  $('leads-list').addEventListener('change', e => {
+    const sel = e.target.closest('[data-lead-status]');
+    if (sel) {
+      const l = leads.find(x=>x.id===+sel.dataset.leadStatus);
+      if (l) { l.status=sel.value; saveLeads(); renderLeads($('filter-lead-status').value); renderDashboard(); toast('✅',`Lead de ${l.nome} → ${l.status}`,'',"info"); }
+    }
+  });
+  $('leads-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-del-lead]');
+    if (btn) {
+      const l = leads.find(x=>x.id===+btn.dataset.delLead);
+      if (l && confirm(`Remover lead de ${l.nome}?`)) {
+        leads = leads.filter(x=>x.id!==l.id); saveLeads();
+        renderLeads($('filter-lead-status').value); renderDashboard();
+        toast('🗑️',`Lead de ${l.nome} removido.`,'',"info");
+      }
+    }
+  });
+
+  // Config
+  $('btn-save-config').addEventListener('click', doSaveConfig);
+  $('cfg-wpp').addEventListener('input', updateWppPreview);
+  $('cfg-wpp-msg').addEventListener('input', updateWppPreview);
+
+  // Destaque label
+  setupDestaqueToggle();
+});
+</script>
+</body>
+</html>
