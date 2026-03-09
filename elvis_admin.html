@@ -910,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
     item.addEventListener('click', () => {
       const p = item.dataset.page, a = item.dataset.action;
       if (p) showPage(p);
-      else if (a==='site') window.open('elvis_index.html','_blank');
+      else if (a==='site') window.open('index.html','_blank');
     }));
 
   $('btn-new-veiculo').addEventListener('click', () => { resetForm(); showPage('cadastro'); });
