@@ -132,11 +132,20 @@ O token é armazenado no `sessionStorage` pelo cliente JavaScript, evitando pers
 
 ## Próximos passos
 
-1. conectar `elvis_admin.html` ao `frontend/js/api.js`;
-2. migrar estoque e leads existentes do `localStorage`;
+1. ✅ `elvis_admin.html` conectado ao `frontend/js/api.js` com JWT;
+2. ✅ estoque, leads e configurações administrativas persistidos pela API;
 3. conectar `index.html` ao endpoint público `GET /vehicles`;
 4. substituir imagens Base64 por Cloudinary/S3;
 5. modularizar CSS e JavaScript;
 6. adicionar migrations com Alembic;
 7. testes automatizados;
 8. preparar multi-tenant/white-label.
+
+
+## Fase 2 — Painel conectado à API
+
+O painel administrativo já utiliza a API para login, restauração de sessão, CRUD de veículos, leads e configurações.
+
+As credenciais antigas hardcoded foram removidas do HTML.
+
+> As imagens ainda usam Base64 temporariamente. A próxima etapa é conectar o showroom público à API e depois migrar imagens para Cloudinary/S3.
