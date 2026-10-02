@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, Text, func
+from sqlalchemy import JSON, Boolean, DateTime, Integer, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy.orm import Mapped, mapped_column
@@ -49,16 +49,16 @@ class Vehicle(Base):
     )
 
     opcionais: Mapped[list[str]] = mapped_column(
-        MutableList.as_mutable(JSONB),
+        "opcionais_json",
+        MutableList.as_mutable(JSON().with_variant(JSONB, "postgresql")),
         nullable=False,
         default=list,
-        server_default="[]",
     )
     fotos: Mapped[list[str]] = mapped_column(
-        MutableList.as_mutable(JSONB),
+        "fotos_json",
+        MutableList.as_mutable(JSON().with_variant(JSONB, "postgresql")),
         nullable=False,
         default=list,
-        server_default="[]",
     )
 
     created_at: Mapped[datetime] = mapped_column(
