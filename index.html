@@ -354,33 +354,83 @@ footer{background:var(--panel);border-top:1px solid var(--border);padding:48px 4
   </svg>
 </a>
 
-<script>
+<script type="module">
+import { api } from "./frontend/js/api.js";
+
 /* ════════════════════════════════════════════
    ELVIS VEÍCULOS — script.js integrado
    ════════════════════════════════════════════ */
-const STORAGE_KEY = 'elvis_vehicles';
-const CONFIG_KEY  = 'elvis_config';
-
-/* ── Dados padrão ── */
 const DEFAULT_VEHICLES = [
-  { id:1, marca:'Hyundai',    modelo:'Azera',   versao:'3.0 V6 GLS',  anoFab:'2011', anoMod:'2012', preco:'74.990', km:'98.000', cor:'Prata',  cambio:'Automático', combustivel:'Gasolina', finalPlaca:'3', portas:'4', motor:'3.0 V6 270cv', fipe:'79.100', destaque:true,  status:'ativo', optionals:['Ar Cond. Digital','Bancos em Couro','GPS de Fábrica','Som Premium','Teto Solar'], photos:[] },
-  { id:2, marca:'Hyundai',    modelo:'Tucson',  versao:'2.0 GLS',     anoFab:'2014', anoMod:'2015', preco:'64.990', km:'72.000', cor:'Branco', cambio:'Automático', combustivel:'Flex',     finalPlaca:'5', portas:'4', motor:'2.0 16v',     fipe:'68.000', destaque:false, status:'ativo', optionals:['Ar Cond. Digital','Câmera de Ré'], photos:[] },
-  { id:3, marca:'Toyota',     modelo:'Corolla', versao:'2.0 XEI',     anoFab:'2018', anoMod:'2019', preco:'89.900', km:'55.000', cor:'Preto',  cambio:'Automático', combustivel:'Flex',     finalPlaca:'7', portas:'4', motor:'2.0 Flex',    fipe:'92.000', destaque:false, status:'ativo', optionals:['GPS de Fábrica','Alarme','Ar Cond. Digital'], photos:[] },
-  { id:4, marca:'Volkswagen', modelo:'Jetta',   versao:'2.0 TSI',     anoFab:'2017', anoMod:'2017', preco:'78.500', km:'68.000', cor:'Cinza',  cambio:'Automático', combustivel:'Gasolina', finalPlaca:'2', portas:'4', motor:'2.0 Turbo',   fipe:'81.000', destaque:false, status:'ativo', optionals:['Bancos em Couro','Som Premium'], photos:[] }
+  { id:1, marca:'Hyundai', modelo:'Azera', versao:'3.0 V6 GLS', anoFab:'2011', anoMod:'2012', preco:'74.990', km:'98.000', cor:'Prata', cambio:'Automático', combustivel:'Gasolina', finalPlaca:'3', portas:'4', motor:'3.0 V6 270cv', fipe:'79.100', destaque:true, status:'ativo', optionals:['Ar Cond. Digital','Bancos em Couro','GPS de Fábrica','Som Premium','Teto Solar'], photos:[] }
 ];
+
 const DEFAULT_CONFIG = {
-  wpp:'5511999999999', wppMsg:'Olá! Vim pelo site da Elvis Veículos.',
-  wppBadge:'3', nome:'Elvis Veículos', endereco:'Rua Principal, 123 — Sua Cidade/SP',
-  horario:'Seg–Sex: 9h às 18h | Sab: 9h às 13h', email:'contato@elvisveiculos.com.br',
+  wpp:'5511999999999',
+  wppMsg:'Olá! Vim pelo site da Elvis Veículos.',
+  wppBadge:'3',
+  nome:'Elvis Veículos',
+  endereco:'Rua Principal, 123 — Sua Cidade/SP',
+  horario:'Seg–Sex: 9h às 18h | Sab: 9h às 13h',
+  email:'contato@elvisveiculos.com.br',
   footer:'© 2026 Elvis Veículos — Todos os direitos reservados'
 };
 
-/* ── Estado ── */
-let allVehicles, activeVehicles, cfg;
+let allVehicles=[], activeVehicles=[], cfg={...DEFAULT_CONFIG};
 
-function loadData() {
-  try { const s = localStorage.getItem(STORAGE_KEY); allVehicles = s ? JSON.parse(s) : DEFAULT_VEHICLES; } catch(e) { allVehicles = DEFAULT_VEHICLES; }
-  try { const s = localStorage.getItem(CONFIG_KEY);  cfg = s ? JSON.parse(s) : DEFAULT_CONFIG; } catch(e) { cfg = DEFAULT_CONFIG; }
+function normalizeVehicle(v) {
+  const formatNumber = value => {
+    if (value === null || value === undefined || value === '') return '';
+    return Number(value).toLocaleString('pt-BR', {maximumFractionDigits:2});
+  };
+  return {
+    id:v.id,
+    marca:v.marca,
+    modelo:v.modelo,
+    versao:v.versao||'',
+    anoFab:String(v.ano_fab ?? ''),
+    anoMod:String(v.ano_mod ?? ''),
+    preco:formatNumber(v.preco),
+    km:formatNumber(v.km),
+    cor:v.cor||'',
+    cambio:v.cambio||'',
+    combustivel:v.combustivel||'',
+    finalPlaca:v.final_placa||'',
+    portas:v.portas ?? '',
+    motor:v.motor||'',
+    fipe:formatNumber(v.fipe),
+    destaque:!!v.destaque,
+    status:v.status||'ativo',
+    optionals:v.opcionais||[],
+    photos:v.fotos||[]
+  };
+}
+
+function normalizeConfig(data) {
+  return {
+    wpp:data.whatsapp||DEFAULT_CONFIG.wpp,
+    wppMsg:data.whatsapp_msg||DEFAULT_CONFIG.wppMsg,
+    wppBadge:data.whatsapp_badge||DEFAULT_CONFIG.wppBadge,
+    nome:data.nome||DEFAULT_CONFIG.nome,
+    endereco:data.endereco||DEFAULT_CONFIG.endereco,
+    horario:data.horario||DEFAULT_CONFIG.horario,
+    email:data.email||DEFAULT_CONFIG.email,
+    footer:data.footer||DEFAULT_CONFIG.footer
+  };
+}
+
+async function loadData() {
+  try {
+    const [vehicleRows, configData] = await Promise.all([
+      api.vehicles.list(),
+      api.config.get()
+    ]);
+    allVehicles = vehicleRows.map(normalizeVehicle);
+    cfg = normalizeConfig(configData);
+  } catch (error) {
+    allVehicles = DEFAULT_VEHICLES;
+    cfg = {...DEFAULT_CONFIG};
+    toast('⚠️','Modo demonstração','API indisponível; exibindo dados de contingência.','info');
+  }
   activeVehicles = allVehicles.filter(v => !v.status || v.status === 'ativo');
 }
 
@@ -567,6 +617,10 @@ function applyConfig() {
   if (cfg.horario)  document.getElementById('f-horario').innerHTML  = `<i class="bi bi-clock-fill"   style="color:var(--gold)"></i> ${cfg.horario}`;
   if (cfg.email)    document.getElementById('f-email').innerHTML    = `<i class="bi bi-envelope-fill" style="color:var(--gold)"></i> ${cfg.email}`;
   if (cfg.footer)   document.getElementById('footer-copy').textContent = cfg.footer;
+  if (cfg.nome) {
+    document.querySelectorAll('.logo-name').forEach(el => el.textContent = cfg.nome.toUpperCase());
+    document.title = `${cfg.nome} — Showroom Premium`;
+  }
 }
 
 /* ── Filtro ── */
@@ -596,21 +650,9 @@ function doFilter() {
     '', result.length?'success':'info');
 }
 
-/* ── Storage sync ── */
-window.addEventListener('storage', e => {
-  if (e.key === STORAGE_KEY || e.key === CONFIG_KEY) {
-    loadData(); applyConfig();
-    populateFilters(activeVehicles);
-    renderCards(activeVehicles);
-    const d = activeVehicles.find(v => v.destaque) || activeVehicles[0];
-    if (d) showDetail(d);
-    toast('🔄','Estoque atualizado!','Admin sincronizou novos dados.');
-  }
-});
-
 /* ── INIT ── */
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadData();
   applyConfig();
   populateFilters(activeVehicles);
   renderCards(activeVehicles);
