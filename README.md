@@ -149,3 +149,17 @@ O painel administrativo já utiliza a API para login, restauração de sessão, 
 As credenciais antigas hardcoded foram removidas do HTML.
 
 > As imagens ainda usam Base64 temporariamente. A próxima etapa é conectar o showroom público à API e depois migrar imagens para Cloudinary/S3.
+
+
+## Fase 3 — Showroom público conectado à API
+
+O `index.html` agora consome dados do backend:
+
+- `GET /vehicles` para carregar o estoque público;
+- `GET /config` para nome da loja, WhatsApp, endereço, horário, e-mail e rodapé;
+- apenas veículos com status `ativo` são exibidos;
+- filtros continuam funcionando no frontend;
+- o veículo em destaque vem do backend;
+- caso a API esteja indisponível, o showroom entra em modo demonstração com dados de contingência.
+
+O showroom não depende mais de `localStorage` para estoque ou configuração.
