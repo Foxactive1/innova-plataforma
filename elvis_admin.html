@@ -199,7 +199,7 @@ textarea.fc{resize:vertical;min-height:80px}
     <input type="password" id="login-pass" placeholder="Senha"   autocomplete="current-password"/>
     <button class="btn-login" id="btn-login"><i class="bi bi-box-arrow-in-right me-1"></i>Entrar</button>
     <div class="login-error" id="login-error">Usuário ou senha inválidos.</div>
-    <div style="margin-top:20px;font-size:11px;color:var(--muted)">admin / elvis2026</div>
+    <div style="margin-top:20px;font-size:11px;color:var(--muted)">Acesso protegido pela API InNovaIdeia</div>
   </div>
 </div>
 
@@ -482,14 +482,12 @@ textarea.fc{resize:vertical;min-height:80px}
   <div><div id="toast-text" style="font-weight:600"></div><div id="toast-sub" style="font-size:11px;color:var(--muted);margin-top:2px"></div></div>
 </div>
 
-<script>
+<script type="module">
+import { api, login, clearToken, getToken } from "./frontend/js/api.js";
+
 /* ════════════════════════════════════════════
    ELVIS VEÍCULOS — ADMIN PANEL
    ════════════════════════════════════════════ */
-const STORAGE_KEY = 'elvis_vehicles';
-const LEADS_KEY   = 'elvis_leads';
-const CONFIG_KEY  = 'elvis_config';
-
 const OPTIONALS = [
   'Ar Cond. Digital','Bancos em Couro','GPS de Fábrica','Som Premium','Teto Solar',
   'Faróis de Neblina','Alarme','Rodas Aro 17','Câmera de Ré','Sensor de Ré',
@@ -498,7 +496,7 @@ const OPTIONALS = [
   'Volante Multifuncional','Kit Xenon','Carregador por Indução'
 ];
 
-let vehicles=[], leads=[], config={}, nextId=1, nextLeadId=1, uploadedPhotos=[], editingId=null;
+let vehicles=[], leads=[], config={}, uploadedPhotos=[], editingId=null;
 
 /* ── Utilitários ── */
 const $ = id => document.getElementById(id);
@@ -531,46 +529,64 @@ function timeAgo(ts) {
   return `há ${Math.floor(d/86400000)}d`;
 }
 
-/* ── Persistência ── */
-function saveVehicles() { localStorage.setItem(STORAGE_KEY, JSON.stringify(vehicles)); }
-function saveLeads()    { localStorage.setItem(LEADS_KEY,   JSON.stringify(leads)); }
-function saveConfig()   { localStorage.setItem(CONFIG_KEY,  JSON.stringify(config)); }
-
-function loadAll() {
-  try { const s = localStorage.getItem(STORAGE_KEY); vehicles = s ? JSON.parse(s) : getDefaultVehicles(); nextId = vehicles.length ? Math.max(...vehicles.map(v=>v.id))+1 : 1; } catch(e) { vehicles = getDefaultVehicles(); }
-  try { const s = localStorage.getItem(LEADS_KEY);   leads    = s ? JSON.parse(s) : getDefaultLeads();   nextLeadId = leads.length ? Math.max(...leads.map(l=>l.id))+1 : 1; } catch(e) { leads = getDefaultLeads(); }
-  try { const s = localStorage.getItem(CONFIG_KEY);  config   = s ? JSON.parse(s) : getDefaultConfig(); } catch(e) { config = getDefaultConfig(); }
+function normalizeVehicle(v) {
+  return {
+    id:v.id, marca:v.marca, modelo:v.modelo, versao:v.versao||'',
+    anoFab:v.ano_fab ?? '', anoMod:v.ano_mod ?? '', cor:v.cor||'',
+    finalPlaca:v.final_placa||'', cambio:v.cambio||'', combustivel:v.combustivel||'',
+    motor:v.motor||'', portas:v.portas ?? '', km:v.km ?? 0,
+    preco:v.preco ?? 0, fipe:v.fipe ?? '', status:v.status||'ativo',
+    destaque:!!v.destaque, optionals:v.opcionais||[], photos:v.fotos||[]
+  };
 }
 
-function getDefaultVehicles() {
-  return [
-    {id:1,marca:'Hyundai',modelo:'Azera',versao:'3.0 V6 GLS',anoFab:'2011',anoMod:'2012',preco:'74.990',km:'98.000',cor:'Prata',cambio:'Automático',combustivel:'Gasolina',finalPlaca:'3',portas:'4',motor:'3.0 V6 270cv',fipe:'79.100',status:'ativo',destaque:true,optionals:['Ar Cond. Digital','Bancos em Couro','GPS de Fábrica','Teto Solar','Som Premium'],photos:[]},
-    {id:2,marca:'Hyundai',modelo:'Tucson',versao:'2.0 GLS',anoFab:'2014',anoMod:'2015',preco:'64.990',km:'72.000',cor:'Branco',cambio:'Automático',combustivel:'Flex',finalPlaca:'5',portas:'4',motor:'2.0 16v',fipe:'68.000',status:'ativo',destaque:false,optionals:['Ar Cond. Digital','Câmera de Ré'],photos:[]},
-    {id:3,marca:'Toyota',modelo:'Corolla',versao:'2.0 XEI',anoFab:'2018',anoMod:'2019',preco:'89.900',km:'55.000',cor:'Preto',cambio:'Automático',combustivel:'Flex',finalPlaca:'7',portas:'4',motor:'2.0 Flex',fipe:'92.000',status:'ativo',destaque:false,optionals:['GPS de Fábrica','Alarme'],photos:[]},
-    {id:4,marca:'Volkswagen',modelo:'Jetta',versao:'2.0 TSI',anoFab:'2017',anoMod:'2017',preco:'78.500',km:'68.000',cor:'Cinza',cambio:'Automático',combustivel:'Gasolina',finalPlaca:'2',portas:'4',motor:'2.0 Turbo',fipe:'81.000',status:'pause',destaque:false,optionals:['Bancos em Couro'],photos:[]}
-  ];
+function normalizeLead(l) {
+  return {
+    id:l.id, nome:l.nome, tel:l.telefone||'', email:l.email||'',
+    veiculo:l.veiculo||'', canal:l.canal||'', status:l.status||'novo',
+    obs:l.observacao||'', ts:l.created_at ? new Date(l.created_at).getTime() : Date.now()
+  };
 }
-function getDefaultLeads() {
-  return [
-    {id:1,nome:'João Souza',tel:'(11) 99999-1111',email:'joao@email.com',veiculo:'Hyundai Azera',canal:'whatsapp',status:'novo',ts:Date.now()-600000,obs:'Perguntou sobre financiamento'},
-    {id:2,nome:'Maria Lima',tel:'(11) 98888-2222',email:'maria@email.com',veiculo:'Toyota Corolla',canal:'site',status:'atendido',ts:Date.now()-3600000,obs:'Agendou visita para amanhã'}
-  ];
+
+function normalizeConfig(cfg) {
+  return {
+    nome:cfg.nome||'', endereco:cfg.endereco||'', horario:cfg.horario||'',
+    email:cfg.email||'', footer:cfg.footer||'', wpp:cfg.whatsapp||'',
+    wppMsg:cfg.whatsapp_msg||'', wppBadge:cfg.whatsapp_badge||'3'
+  };
 }
-function getDefaultConfig() {
-  return {nome:'Elvis Veículos',endereco:'Rua Principal, 123 — Sua Cidade/SP',horario:'Seg–Sex: 9h às 18h | Sab: 9h às 13h',email:'contato@elvisveiculos.com.br',wpp:'5511999999999',wppMsg:'Olá! Vim pelo site da Elvis Veículos.',wppBadge:'3',footer:'© 2026 Elvis Veículos — Todos os direitos reservados'};
+
+async function loadAll() {
+  const [vehicleRows, leadRows, cfg] = await Promise.all([
+    api.vehicles.list(),
+    api.leads.list(),
+    api.config.get()
+  ]);
+  vehicles = vehicleRows.map(normalizeVehicle);
+  leads = leadRows.map(normalizeLead);
+  config = normalizeConfig(cfg);
 }
 
 /* ── LOGIN ── */
-function doLogin() {
+async function doLogin() {
   const u = $('login-user').value.trim(), p = $('login-pass').value;
-  if (u==='admin' && p==='elvis2026') {
+  const btn = $('btn-login');
+  const err = $('login-error');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  try {
+    await login(u, p);
+    await loadAll();
     $('login-screen').style.display = 'none';
     $('admin-screen').style.display = 'block';
     initAdmin();
-  } else {
-    const err = $('login-error');
+  } catch (error) {
+    err.textContent = error.message || 'Falha ao autenticar.';
     err.style.display = 'block';
-    setTimeout(() => err.style.display = 'none', 3000);
+    setTimeout(() => err.style.display = 'none', 3500);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>Entrar';
   }
 }
 
@@ -680,7 +696,7 @@ function resetForm() {
   $('file-input').value = '';
 }
 
-function saveVehicle() {
+async function saveVehicle() {
   const marca  = $('f-marca').value.trim();
   const modelo = $('f-modelo').value.trim();
   const km     = $('f-km').value.trim();
@@ -693,37 +709,42 @@ function saveVehicle() {
   if (isDestaque) vehicles.forEach(v => { v.destaque = false; });
 
   const payload = {
-    id: editingId || nextId++,
     marca, modelo,
-    versao: $('f-versao').value.trim(),
-    anoFab: $('f-anofab').value.trim(),
-    anoMod: $('f-anomod').value.trim(),
-    cor: $('f-cor').value.trim(),
-    finalPlaca: $('f-placa').value.trim(),
-    cambio: $('f-cambio').value,
-    combustivel: $('f-combust').value,
-    motor: $('f-motor').value.trim(),
-    portas: $('f-portas').value,
-    km, preco,
-    fipe: $('f-fipe').value.trim(),
+    versao: $('f-versao').value.trim() || null,
+    ano_fab: Number($('f-anofab').value) || null,
+    ano_mod: Number($('f-anomod').value) || null,
+    cor: $('f-cor').value.trim() || null,
+    final_placa: $('f-placa').value.trim() || null,
+    cambio: $('f-cambio').value || null,
+    combustivel: $('f-combust').value || null,
+    motor: $('f-motor').value.trim() || null,
+    portas: Number($('f-portas').value) || null,
+    km: Number(String(km).replace(/\D/g,'')),
+    preco: Number(String(preco).replace(/\./g,'').replace(',','.')),
+    fipe: $('f-fipe').value.trim() ? Number($('f-fipe').value.replace(/\./g,'').replace(',','.')) : null,
     status: $('f-status').value,
     destaque: isDestaque,
-    optionals,
-    photos: uploadedPhotos.slice()
+    opcionais: optionals,
+    fotos: uploadedPhotos.slice()
   };
 
-  if (editingId) {
-    const idx = vehicles.findIndex(v => v.id === editingId);
-    if (idx !== -1) vehicles[idx] = payload;
-    toast('✅',`${marca} ${modelo} atualizado!`,'','success');
-  } else {
-    vehicles.push(payload);
-    toast('✅',`${marca} ${modelo} cadastrado!`,'','success');
-  }
+  try {
+    const saved = editingId
+      ? await api.vehicles.update(editingId, payload)
+      : await api.vehicles.create(payload);
 
-  saveVehicles();
-  resetForm();
-  renderDashboard();
+    if (saved.destaque) vehicles.forEach(v => v.destaque = false);
+    const normalized = normalizeVehicle(saved);
+    const idx = vehicles.findIndex(v => v.id === normalized.id);
+    if (idx >= 0) vehicles[idx] = normalized; else vehicles.push(normalized);
+
+    toast('✅',`${marca} ${modelo} ${editingId ? 'atualizado' : 'cadastrado'}!`,'','success');
+    resetForm();
+    renderDashboard();
+    renderEstoque();
+  } catch (error) {
+    toast('⚠️','Não foi possível salvar o veículo.',error.message,'error');
+  }
 }
 
 function editVehicle(id) {
@@ -806,7 +827,7 @@ function renderGaleria() {
     document.querySelectorAll('[data-gal-rm]').forEach(btn =>
       btn.addEventListener('click', () => {
         v.photos.splice(+btn.dataset.galRm, 1);
-        saveVehicles();
+        api.vehicles.update(v.id,{fotos:v.photos}).catch(err => toast('⚠️','Falha ao remover foto.',err.message,'error'));
         renderGaleria();
         $('gal-select').value = v.id;
         $('gal-select').dispatchEvent(new Event('change'));
@@ -846,15 +867,27 @@ function openLeadModal(id=null) {
   $('lead-modal').classList.add('show');
 }
 function closeLeadModal() { $('lead-modal').classList.remove('show'); }
-function saveLead() {
+async function saveLead() {
   const nome = $('lead-nome').value.trim();
   if (!nome) { toast('⚠️','Nome obrigatório!','','error'); return; }
-  leads.push({ id:nextLeadId++, nome, tel:$('lead-tel').value, email:$('lead-email').value, veiculo:$('lead-veiculo').value, canal:$('lead-canal').value, status:$('lead-status').value, obs:$('lead-obs').value, ts:Date.now() });
-  saveLeads();
-  closeLeadModal();
-  renderLeads($('filter-lead-status').value);
-  renderDashboard();
-  toast('✅',`Lead de ${nome} salvo!`,'','success');
+  try {
+    const saved = await api.leads.create({
+      nome,
+      telefone:$('lead-tel').value || null,
+      email:$('lead-email').value || null,
+      veiculo:$('lead-veiculo').value || null,
+      canal:$('lead-canal').value,
+      status:$('lead-status').value,
+      observacao:$('lead-obs').value || null
+    });
+    leads.unshift(normalizeLead(saved));
+    closeLeadModal();
+    renderLeads($('filter-lead-status').value);
+    renderDashboard();
+    toast('✅',`Lead de ${nome} salvo!`,'','success');
+  } catch (error) {
+    toast('⚠️','Não foi possível salvar o lead.',error.message,'error');
+  }
 }
 
 /* ── CONFIG ── */
@@ -875,16 +908,20 @@ function updateWppPreview() {
     ? `🔗 <a href="https://wa.me/${num}?text=${encodeURIComponent(msg)}" target="_blank" style="color:var(--gold)">Testar link WhatsApp</a>`
     : '⚠️ Informe o número para gerar o link.';
 }
-function doSaveConfig() {
-  config = {
-    nome: $('cfg-nome').value, endereco:$('cfg-endereco').value,
-    horario:$('cfg-horario').value, email:$('cfg-email').value,
-    footer:$('cfg-footer').value,
-    wpp:$('cfg-wpp').value, wppMsg:$('cfg-wpp-msg').value,
-    wppBadge:$('cfg-wpp-badge').value
-  };
-  saveConfig();
-  toast('✅','Configurações salvas!','Site atualizado automaticamente.','success');
+async function doSaveConfig() {
+  try {
+    const saved = await api.config.update({
+      nome:$('cfg-nome').value, endereco:$('cfg-endereco').value,
+      horario:$('cfg-horario').value, email:$('cfg-email').value,
+      footer:$('cfg-footer').value,
+      whatsapp:$('cfg-wpp').value, whatsapp_msg:$('cfg-wpp-msg').value,
+      whatsapp_badge:$('cfg-wpp-badge').value
+    });
+    config = normalizeConfig(saved);
+    toast('✅','Configurações salvas!','Dados persistidos na API.','success');
+  } catch (error) {
+    toast('⚠️','Não foi possível salvar as configurações.',error.message,'error');
+  }
 }
 
 /* ── DESTAQUE TOGGLE LABEL ── */
@@ -894,12 +931,23 @@ function setupDestaqueToggle() {
 }
 
 /* ── EVENTS ── */
-document.addEventListener('DOMContentLoaded', () => {
-  loadAll();
+document.addEventListener('DOMContentLoaded', async () => {
+  if (getToken()) {
+    try {
+      await api.me();
+      await loadAll();
+      $('login-screen').style.display='none';
+      $('admin-screen').style.display='block';
+      initAdmin();
+    } catch (_) {
+      clearToken();
+    }
+  }
 
   $('btn-login').addEventListener('click', doLogin);
   $('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
   $('btn-logout').addEventListener('click', () => {
+    clearToken();
     $('admin-screen').style.display='none';
     $('login-screen').style.display='flex';
     $('login-user').value=''; $('login-pass').value='';
@@ -943,16 +991,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const v  = vehicles.find(x=>x.id===id);
       if (v) {
         const set = !v.destaque;
-        vehicles.forEach(x => x.destaque=false);
-        v.destaque = set;
-        saveVehicles(); renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
-        toast(set?'⭐':'☆', set?`${v.marca} ${v.modelo} em destaque!`:'Destaque removido.','','info');
+        api.vehicles.update(v.id,{destaque:set}).then(saved => {
+          if (set) vehicles.forEach(x => x.destaque=false);
+          Object.assign(v, normalizeVehicle(saved));
+          renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
+          toast(set?'⭐':'☆', set?`${v.marca} ${v.modelo} em destaque!`:'Destaque removido.','','info');
+        }).catch(err => toast('⚠️','Falha ao alterar destaque.',err.message,'error'));
       } return;
     }
     const toggleBtn = e.target.closest('[data-toggle]');
     if (toggleBtn) {
       const v = vehicles.find(x=>x.id===+toggleBtn.dataset.toggle);
-      if (v) { v.status = v.status==='ativo'?'pause':'ativo'; saveVehicles(); renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard(); toast('✅',`${v.marca} ${v.modelo}: ${v.status==='ativo'?'Ativo':'Pausado'}`,'',"info"); } return;
+      if (v) {
+        const newStatus = v.status==='ativo'?'pause':'ativo';
+        api.vehicles.update(v.id,{status:newStatus}).then(saved => {
+          Object.assign(v, normalizeVehicle(saved));
+          renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
+          toast('✅',`${v.marca} ${v.modelo}: ${v.status==='ativo'?'Ativo':'Pausado'}`,'',"info");
+        }).catch(err => toast('⚠️','Falha ao alterar status.',err.message,'error'));
+      } return;
     }
     const editBtn = e.target.closest('[data-edit]');
     if (editBtn) { editVehicle(+editBtn.dataset.edit); return; }
@@ -960,9 +1017,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (delBtn) {
       const v = vehicles.find(x=>x.id===+delBtn.dataset.del);
       if (v && confirm(`Remover ${v.marca} ${v.modelo}?`)) {
-        vehicles = vehicles.filter(x=>x.id!==v.id); saveVehicles();
-        renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
-        toast('🗑️',`${v.marca} ${v.modelo} removido.`,'',"info");
+        api.vehicles.remove(v.id).then(() => {
+          vehicles = vehicles.filter(x=>x.id!==v.id);
+          renderEstoque($('search-estoque').value,$('filter-status-estoque').value); renderDashboard();
+          toast('🗑️',`${v.marca} ${v.modelo} removido.`,'',"info");
+        }).catch(err => toast('⚠️','Falha ao remover veículo.',err.message,'error'));
       }
     }
   });
@@ -978,7 +1037,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const sel = e.target.closest('[data-lead-status]');
     if (sel) {
       const l = leads.find(x=>x.id===+sel.dataset.leadStatus);
-      if (l) { l.status=sel.value; saveLeads(); renderLeads($('filter-lead-status').value); renderDashboard(); toast('✅',`Lead de ${l.nome} → ${l.status}`,'',"info"); }
+      if (l) {
+        api.leads.setStatus(l.id,sel.value).then(saved => {
+          Object.assign(l, normalizeLead(saved));
+          renderLeads($('filter-lead-status').value); renderDashboard();
+          toast('✅',`Lead de ${l.nome} → ${l.status}`,'',"info");
+        }).catch(err => toast('⚠️','Falha ao atualizar lead.',err.message,'error'));
+      }
     }
   });
   $('leads-list').addEventListener('click', e => {
@@ -986,9 +1051,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn) {
       const l = leads.find(x=>x.id===+btn.dataset.delLead);
       if (l && confirm(`Remover lead de ${l.nome}?`)) {
-        leads = leads.filter(x=>x.id!==l.id); saveLeads();
-        renderLeads($('filter-lead-status').value); renderDashboard();
-        toast('🗑️',`Lead de ${l.nome} removido.`,'',"info");
+        api.leads.remove(l.id).then(() => {
+          leads = leads.filter(x=>x.id!==l.id);
+          renderLeads($('filter-lead-status').value); renderDashboard();
+          toast('🗑️',`Lead de ${l.nome} removido.`,'',"info");
+        }).catch(err => toast('⚠️','Falha ao remover lead.',err.message,'error'));
       }
     }
   });

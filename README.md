@@ -132,11 +132,76 @@ O token é armazenado no `sessionStorage` pelo cliente JavaScript, evitando pers
 
 ## Próximos passos
 
-1. conectar `elvis_admin.html` ao `frontend/js/api.js`;
-2. migrar estoque e leads existentes do `localStorage`;
+1. ✅ `elvis_admin.html` conectado ao `frontend/js/api.js` com JWT;
+2. ✅ estoque, leads e configurações administrativas persistidos pela API;
 3. conectar `index.html` ao endpoint público `GET /vehicles`;
 4. substituir imagens Base64 por Cloudinary/S3;
 5. modularizar CSS e JavaScript;
 6. adicionar migrations com Alembic;
 7. testes automatizados;
 8. preparar multi-tenant/white-label.
+
+
+## Fase 2 — Painel conectado à API
+
+O painel administrativo já utiliza a API para login, restauração de sessão, CRUD de veículos, leads e configurações.
+
+As credenciais antigas hardcoded foram removidas do HTML.
+
+> As imagens ainda usam Base64 temporariamente. A próxima etapa é conectar o showroom público à API e depois migrar imagens para Cloudinary/S3.
+
+
+## Fase 3 — Showroom público conectado à API
+
+O `index.html` agora consome dados do backend:
+
+- `GET /vehicles` para carregar o estoque público;
+- `GET /config` para nome da loja, WhatsApp, endereço, horário, e-mail e rodapé;
+- apenas veículos com status `ativo` são exibidos;
+- filtros continuam funcionando no frontend;
+- o veículo em destaque vem do backend;
+- caso a API esteja indisponível, o showroom entra em modo demonstração com dados de contingência.
+
+O showroom não depende mais de `localStorage` para estoque ou configuração.
+
+
+## Neon PostgreSQL
+
+O backend agora usa tipos adequados ao PostgreSQL/Neon:
+
+- `JSONB` para opcionais e fotos;
+- `NUMERIC(12,2)` para preço e FIPE;
+- `TIMESTAMPTZ` para datas;
+- índice único parcial garantindo apenas um veículo em destaque;
+- fallback local compatível com SQLite via SQLAlchemy.
+
+### Banco Neon já existente
+
+Como as tabelas foram criadas antes dessa refatoração, execute uma única vez no SQL Editor do Neon:
+
+```text
+backend/migrations/neon_001_native_types.sql
+```
+
+Depois configure o arquivo `backend/.env`:
+
+```env
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/neondb?sslmode=require
+SECRET_KEY=uma-chave-forte
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=uma-senha-forte
+```
+
+A aplicação também aceita URLs iniciadas em `postgres://` ou `postgresql://` e normaliza automaticamente para o driver `psycopg`.
+
+### Ordem recomendada
+
+1. executar `neon_001_native_types.sql` no Neon;
+2. configurar `backend/.env`;
+3. instalar `backend/requirements.txt`;
+4. iniciar com `uvicorn app.main:app --reload`;
+5. abrir `GET /health`;
+6. confirmar resposta com `database: "postgresql"`;
+7. testar login e CRUD pelo `/docs`.
+
+> Nunca versione a `DATABASE_URL` real nem credenciais do Neon. O arquivo `.env` permanece ignorado pelo Git.
